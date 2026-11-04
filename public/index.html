@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b33">
+  <title>Entrar · Meninos da Vila FC</title>
+  <link rel="icon" href="img/escudo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="login-page">
+    <section class="login-visual" aria-hidden="true">
+      <span class="login-badge"><i></i>Área do treinador</span>
+      <div class="crest-wrap">
+        <div class="crest"><img src="img/escudo.jpg" alt=""></div>
+      </div>
+      <div>
+        <h2>Todos os seus craques,<br><em>em dia</em> e em um só lugar.</h2>
+        <p>Cadastro de alunos e controle das mensalidades da escolinha, do celular ou do computador.</p>
+      </div>
+    </section>
+
+    <section class="login-form-side">
+      <form class="login-form" id="formLogin" novalidate>
+        <div class="mobile-brand">
+          <img src="img/escudo.jpg" alt="Escudo Meninos da Vila">
+          <div class="brand"><span><strong>Meninos da Vila</strong><small style="color:var(--green-700)">Futebol Clube</small></span></div>
+        </div>
+        <h1>Bem-vindo de volta</h1>
+        <p class="sub">Entre para gerenciar alunos e mensalidades.</p>
+
+        <p class="form-error" id="erro" hidden></p>
+
+        <label class="field">E-mail
+          <input type="email" name="email" autocomplete="email" placeholder="voce@email.com" required>
+        </label>
+        <label class="field">Senha
+          <input type="password" name="senha" autocomplete="current-password" placeholder="••••••••" required>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit" id="btnEntrar" style="height:50px;margin-top:6px">Entrar</button>
+
+        <p class="demo-note" id="demoNote" hidden>
+          <strong>Modo demonstração.</strong> O backend ainda não está configurado, então qualquer e-mail e senha entram com dados fictícios.
+        </p>
+        <p class="login-foot">© Meninos da Vila Futebol Clube</p>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

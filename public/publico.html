@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#070b33">
+  <meta name="description" content="Mensalidades, fotos e vídeos da escolinha Meninos da Vila Futebol Clube.">
+  <meta property="og:title" content="Meninos da Vila FC · Área dos responsáveis">
+  <meta property="og:description" content="Acompanhe as mensalidades e veja as fotos e vídeos da escolinha.">
+  <meta property="og:image" content="img/escudo.jpg">
+  <title>Meninos da Vila FC · Responsáveis</title>
+  <link rel="icon" href="img/escudo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pub">
+  <div class="demo-banner" id="demoBanner" hidden>Página de demonstração com dados fictícios.</div>
+
+  <header class="pub-hero">
+    <div class="pub-head">
+      <img class="pub-crest" src="img/escudo.jpg" alt="Escudo Meninos da Vila FC">
+      <div>
+        <p class="eyebrow">Área dos responsáveis</p>
+        <h1 id="titulo">Meninos da Vila FC</h1>
+        <p>Mensalidades e momentos da escolinha</p>
+      </div>
+    </div>
+    <nav class="pub-tabs" id="pubTabs" hidden>
+      <a href="#mensalidades" class="on">Mensalidades</a>
+      <a href="#fotos">Fotos e vídeos <em id="nMidias">0</em></a>
+    </nav>
+  </header>
+
+  <main class="pub-main">
+    <div id="carregando">
+      <div class="card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+    </div>
+
+    <section data-pub="mensalidades" hidden>
+      <div class="pub-month">
+        <button class="icon-btn" id="mesAnterior" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <h2 id="mesTitulo">—</h2>
+        <button class="icon-btn" id="mesProximo" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+
+      <div class="card pub-summary">
+        <div class="ring" aria-hidden="true">
+          <svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" id="anel" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
+          <div><strong id="pct">0%</strong><span>em dia</span></div>
+        </div>
+        <div class="pub-stats">
+          <div class="pub-stat"><strong id="sTotal">0</strong><span>Alunos</span></div>
+          <div class="pub-stat ok"><strong id="sOk">0</strong><span>Em dia</span></div>
+          <div class="pub-stat pend"><strong id="sPend">0</strong><span>Pendentes</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input id="busca" type="search" placeholder="Buscar pelo nome do aluno" autocomplete="off">
+          </div>
+          <div class="segmented" id="filtros">
+            <button data-f="todos" class="on">Todos</button>
+            <button data-f="ok">Em dia</button>
+            <button data-f="pend">Pendentes</button>
+          </div>
+        </div>
+        <ul class="pub-list" id="lista"></ul>
+        <div class="empty" id="vazio" hidden><h3>Nenhum aluno encontrado</h3><p>Confira o nome digitado.</p></div>
+      </div>
+    </section>
+
+    <section data-pub="fotos" hidden>
+      <div class="gallery pub-gallery" id="galeria"></div>
+      <div class="empty card" id="galeriaVazia" hidden><h3>Em breve</h3><p>As fotos e vídeos dos treinos e jogos vão aparecer aqui.</p></div>
+    </section>
+
+    <div class="pub-erro" id="erro" hidden>
+      <img src="img/escudo.jpg" alt="">
+      <h2>Link indisponível</h2>
+      <p id="erroTexto">Este link não está disponível. Peça um novo link ao treinador.</p>
+    </div>
+  </main>
+
+  <footer class="pub-foot" id="rodape"></footer>
+  <script type="module" src="js/publico.js"></script>
+</body>
+</html>
