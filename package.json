@@ -7,10 +7,10 @@
  "engines": {
   "node": "24.x"
 },
-  "scripts": {
-    "dev": "vercel dev",
-    "demo": "npx --yes serve public -l 5500"
-  },
+ "scripts": {
+  "build": "echo \"Sem etapa de build: o site estático fica em public/ e a API em api/\"",
+  "demo": "npx --yes serve public -l 5500"
+},
   "dependencies": {
     "@sentry/node": "^8.55.0",
     "@supabase/ssr": "^0.12.7",

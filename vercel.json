@@ -3,11 +3,8 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/api/:rota*",
-      "destination": "/api?__rota=:rota*"
-    }
-  ],
+  { "source": "/api/(.*)", "destination": "/api?__rota=$1" }
+],
   "crons": [
     {
       "path": "/api/lembretes",
