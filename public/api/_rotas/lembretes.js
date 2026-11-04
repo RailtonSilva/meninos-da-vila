@@ -1,8 +1,8 @@
 import { Resend } from 'resend';
-import { route, readBody, check, HttpError } from './_lib/http.js';
-import { db, exigirAcesso } from './_lib/supabase.js';
-import { registrar } from './_lib/auditoria.js';
-import { validarCompetencia, competenciaAtual, valorMensalidade } from './_lib/validar.js';
+import { route, readBody, check, HttpError } from '../_lib/http.js';
+import { db, exigirAcesso } from '../_lib/supabase.js';
+import { registrar } from '../_lib/auditoria.js';
+import { validarCompetencia, competenciaAtual, valorMensalidade } from '../_lib/validar.js';
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

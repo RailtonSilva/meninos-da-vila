@@ -1,7 +1,7 @@
-import { route, readBody, check, HttpError } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { validarId } from '../_lib/validar.js';
-import { registrar } from '../_lib/auditoria.js';
+import { route, readBody, check, HttpError } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { validarId } from '../../_lib/validar.js';
+import { registrar } from '../../_lib/auditoria.js';
 
 export default route({
   // PUT /api/links/:id { ativo?, nome_completo?, titulo? }

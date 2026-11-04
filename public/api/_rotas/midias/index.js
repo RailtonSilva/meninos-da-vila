@@ -1,8 +1,8 @@
-import { route, readBody, check, HttpError } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { CAMINHO_VALIDO, midiaParaCliente } from '../_lib/midias.js';
-import { youtubeId } from '../_lib/validar.js';
-import { registrar } from '../_lib/auditoria.js';
+import { route, readBody, check, HttpError } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { CAMINHO_VALIDO, midiaParaCliente } from '../../_lib/midias.js';
+import { youtubeId } from '../../_lib/validar.js';
+import { registrar } from '../../_lib/auditoria.js';
 
 const legendaLimpa = (l) => (l == null ? null : String(l).trim().slice(0, 200) || null);
 

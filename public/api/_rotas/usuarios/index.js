@@ -1,5 +1,5 @@
-import { route, check } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
+import { route, check } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
 
 const ORDEM = { pendente: 0, ativo: 1, bloqueado: 2 };
 

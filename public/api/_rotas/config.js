@@ -1,4 +1,4 @@
-import { valorMensalidade } from './_lib/validar.js';
+import { valorMensalidade } from '../_lib/validar.js';
 
 // Configuração PÚBLICA para o navegador. Nunca coloque segredos aqui
 // (a anon key do Supabase é pública por natureza; o RLS protege as tabelas).

@@ -1,6 +1,6 @@
-import { route, check } from './_lib/http.js';
-import { db, carregarPerfil } from './_lib/supabase.js';
-import { enviarEmail, moldura, esc, urlSite } from './_lib/email.js';
+import { route, check } from '../_lib/http.js';
+import { db, carregarPerfil } from '../_lib/supabase.js';
+import { enviarEmail, moldura, esc, urlSite } from '../_lib/email.js';
 
 // GET /api/conta → quem sou eu (nome, papel, status). Funciona mesmo para cadastro pendente,
 // para o front mostrar a tela "aguardando aprovação".

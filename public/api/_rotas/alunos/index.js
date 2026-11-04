@@ -1,7 +1,7 @@
-import { route, readBody, check } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { registrar } from '../_lib/auditoria.js';
-import { validarAluno, validarCompetencia, competenciaAtual } from '../_lib/validar.js';
+import { route, readBody, check } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { registrar } from '../../_lib/auditoria.js';
+import { validarAluno, validarCompetencia, competenciaAtual } from '../../_lib/validar.js';
 
 export default route({
   // GET /api/alunos?competencia=2026-11 → alunos + situação da mensalidade no mês (admin e treinador)

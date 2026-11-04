@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { route, readBody, HttpError } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { BUCKET, TIPOS_ARQUIVO } from '../_lib/midias.js';
+import { route, readBody, HttpError } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { BUCKET, TIPOS_ARQUIVO } from '../../_lib/midias.js';
 
 // POST /api/midias/upload { mime, tamanho } → URL assinada para o navegador enviar o arquivo
 // direto ao Supabase Storage (sem passar pelo limite de 4,5 MB das funções da Vercel).

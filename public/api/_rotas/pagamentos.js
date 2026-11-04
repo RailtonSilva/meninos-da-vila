@@ -1,7 +1,7 @@
-import { route, readBody, check, HttpError } from './_lib/http.js';
-import { db } from './_lib/supabase.js';
-import { registrar, mesExtenso } from './_lib/auditoria.js';
-import { validarId, validarCompetencia, valorMensalidade } from './_lib/validar.js';
+import { route, readBody, check, HttpError } from '../_lib/http.js';
+import { db } from '../_lib/supabase.js';
+import { registrar, mesExtenso } from '../_lib/auditoria.js';
+import { validarId, validarCompetencia, valorMensalidade } from '../_lib/validar.js';
 
 async function nomeDoAluno(id) {
   const a = await db().from('alunos').select('nome').eq('id', id).maybeSingle().then(check);

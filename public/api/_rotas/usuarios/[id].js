@@ -1,8 +1,8 @@
-import { route, readBody, check, HttpError } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { registrar } from '../_lib/auditoria.js';
-import { validarId } from '../_lib/validar.js';
-import { enviarEmail, moldura, esc, urlSite } from '../_lib/email.js';
+import { route, readBody, check, HttpError } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { registrar } from '../../_lib/auditoria.js';
+import { validarId } from '../../_lib/validar.js';
+import { enviarEmail, moldura, esc, urlSite } from '../../_lib/email.js';
 
 const PAPEIS = ['admin', 'treinador'];
 const STATUS = ['ativo', 'bloqueado'];

@@ -1,6 +1,6 @@
-import { route, check } from './_lib/http.js';
-import { db } from './_lib/supabase.js';
-import { validarId } from './_lib/validar.js';
+import { route, check } from '../_lib/http.js';
+import { db } from '../_lib/supabase.js';
+import { validarId } from '../_lib/validar.js';
 
 const GRUPOS = ['aluno', 'pagamento', 'midia', 'link', 'lembretes', 'usuario'];
 

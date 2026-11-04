@@ -69,24 +69,19 @@ public/               → front-end estático (servido pela Vercel)
   js/ui.js            → avisos, confirmação, visualizador de fotos e vídeos
   js/login.js, js/app.js, js/galeria.js, js/links.js, js/equipe.js, js/publico.js
   img/escudo.jpg
-api/                  → funções serverless Node.js (Vercel)
-  config.js           → configuração pública para o navegador
-  conta.js            → quem está logado (papel e situação)
-  usuarios/           → equipe: listar, aprovar, bloquear, mudar papel, remover
-  auditoria.js        → histórico de ações (paginado, com filtros)
-  alunos/index.js     → GET lista do mês · POST cadastra
-  alunos/[id].js      → PUT edita · DELETE exclui
-  pagamentos.js       → POST marca pago · DELETE desfaz
-  lembretes.js        → envia e-mails (botão ou cron)
-  midias/             → galeria (URL de envio assinada, cadastro, legenda, exclusão)
-  links/              → links públicos (gerar, ativar/desativar, excluir)
-  publico/[token].js  → dados da página dos responsáveis (sem login)
+api/
+  index.js            → ÚNICA função da Vercel: recebe /api/* e encaminha para a rota certa
+  _rotas/             → as rotas (pastas com "_" não contam como função)
+    config.js, conta.js, pagamentos.js, lembretes.js, auditoria.js
+    alunos/  midias/  links/  publico/  usuarios/
   _lib/               → Supabase + controle de acesso, histórico, e-mail, Sentry, validação
 supabase/schema.sql   → tabelas, segurança e bucket da galeria (instalação nova)
 supabase/002_compartilhamento.sql → link público e galeria (para quem já rodou o schema antes)
 supabase/003_acesso.sql → perfis, aprovação e histórico (para quem já rodou o schema antes)
 vercel.json           → pasta pública, cron, cabeçalhos de segurança
 ```
+
+**Por que uma função só?** O plano gratuito (Hobby) da Vercel aceita no máximo **12 funções por deploy**, e cada arquivo em `/api` conta como uma. Por isso, todas as rotas ficam em `api/_rotas/`, e o `api/index.js` encaminha cada chamada; o `vercel.json` reescreve `/api/*` para ele. Para criar uma rota nova: escreva o arquivo em `api/_rotas/` e adicione uma linha na lista `ROTAS` do `api/index.js`. **Não crie arquivos soltos em `/api`.**
 
 **Segurança:** o navegador nunca acessa as tabelas direto. As tabelas têm RLS ligado e nenhuma política pública. Toda operação passa pela API, que confere o token de login e só então usa a `service_role` (que fica apenas na Vercel).
 

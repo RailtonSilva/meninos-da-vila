@@ -1,7 +1,7 @@
-import { route, check, HttpError } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { midiaParaCliente } from '../_lib/midias.js';
-import { competenciaAtual, compShift, categoria, nomePublico } from '../_lib/validar.js';
+import { route, check, HttpError } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { midiaParaCliente } from '../../_lib/midias.js';
+import { competenciaAtual, compShift, categoria, nomePublico } from '../../_lib/validar.js';
 
 const INDISPONIVEL = 'Este link não está disponível. Peça um novo link ao treinador.';
 

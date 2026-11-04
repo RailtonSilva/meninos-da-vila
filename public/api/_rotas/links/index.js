@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { route, readBody, check } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { registrar } from '../_lib/auditoria.js';
+import { route, readBody, check } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { registrar } from '../../_lib/auditoria.js';
 
 const VALIDADES = { 0: null, 30: 30, 90: 90, 365: 365 };
 

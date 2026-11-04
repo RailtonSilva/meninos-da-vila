@@ -1,7 +1,7 @@
-import { route, readBody, check, HttpError } from '../_lib/http.js';
-import { db } from '../_lib/supabase.js';
-import { registrar } from '../_lib/auditoria.js';
-import { validarAluno, validarId } from '../_lib/validar.js';
+import { route, readBody, check, HttpError } from '../../_lib/http.js';
+import { db } from '../../_lib/supabase.js';
+import { registrar } from '../../_lib/auditoria.js';
+import { validarAluno, validarId } from '../../_lib/validar.js';
 
 const ROTULOS = { nome: 'nome', data_nascimento: 'nascimento', responsavel: 'responsável', telefone: 'telefone', email: 'e-mail', observacoes: 'observações' };
 
