@@ -56,7 +56,25 @@ export async function signIn(email, password) {
   if (error) throw new Error(error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : error.message);
 }
 
+/** Cadastro livre: a conta nasce PENDENTE e só funciona depois da aprovação de um administrador. */
+export async function signUp(nome, email, password) {
+  if (cfg.demo) return { precisaConfirmar: false };
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { nome }, emailRedirectTo: `${location.origin}/` },
+  });
+  if (error) {
+    if (/registered|already/i.test(error.message)) throw new Error('Este e-mail já tem cadastro. Use "Entrar".');
+    if (/password/i.test(error.message)) throw new Error('Senha fraca: use pelo menos 8 caracteres.');
+    throw new Error(error.message);
+  }
+  // Com confirmação de e-mail ligada no Supabase, não há sessão até a pessoa clicar no link
+  return { precisaConfirmar: !data.session };
+}
+
 export async function signOut() {
+  contaCache = null;
   if (!cfg.demo) await supabase.auth.signOut();
 }
 
@@ -83,7 +101,11 @@ async function request(path, { method = 'GET', body } = {}) {
   }
   if (r.status === 204) return null;
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.erro || `Erro ${r.status}`);
+  if (!r.ok) {
+    // Acesso suspenso no meio do uso: volta para o painel, que mostra a tela de espera/bloqueio
+    if (data.codigo === 'PENDENTE' || data.codigo === 'BLOQUEADO') location.replace('app.html');
+    throw Object.assign(new Error(data.erro || `Erro ${r.status}`), { codigo: data.codigo, status: r.status });
+  }
   return data;
 }
 
@@ -107,6 +129,40 @@ export const desfazerPagamento = (aluno_id, competencia) =>
 
 export const enviarLembretes = (competencia) =>
   cfg.demo ? demo.lembretes(competencia) : request('/api/lembretes', { method: 'POST', body: { competencia } });
+
+/* ---------------- Conta, equipe e histórico ---------------- */
+
+let contaCache = null;
+
+/** Quem está logado: { id, nome, email, papel: 'admin'|'treinador', status: 'ativo'|'pendente'|'bloqueado' } */
+export async function minhaConta() {
+  contaCache = cfg.demo ? demo.conta() : await request('/api/conta');
+  return contaCache;
+}
+export const contaAtual = () => contaCache;
+export const ehAdmin = () => contaCache?.papel === 'admin';
+
+export async function listarUsuarios() {
+  return cfg.demo ? demo.listarUsuarios() : request('/api/usuarios');
+}
+export const atualizarUsuario = (id, dados) =>
+  cfg.demo ? demo.atualizarUsuario(id, dados) : request(`/api/usuarios/${id}`, { method: 'PUT', body: dados });
+export const removerUsuario = (id) => (cfg.demo ? demo.removerUsuario(id) : request(`/api/usuarios/${id}`, { method: 'DELETE' }));
+
+/** Histórico paginado: { itens, proximo } — passe `antes: proximo` para a página seguinte. */
+export async function listarAuditoria({ usuario = '', grupo = '', antes = '' } = {}) {
+  if (cfg.demo) return demo.listarAuditoria({ usuario, grupo, antes });
+  const q = new URLSearchParams();
+  if (usuario) q.set('usuario', usuario);
+  if (grupo) q.set('grupo', grupo);
+  if (antes) q.set('antes', antes);
+  return request(`/api/auditoria?${q}`);
+}
+
+/** Só no modo demonstração: simula outro perfil para testar as permissões. */
+export function demoTrocarPerfil(valor) {
+  demo.trocarPerfil(valor);
+}
 
 /* ---------------- Galeria ---------------- */
 
@@ -242,11 +298,55 @@ const demo = (() => {
       ].map(([t, a, b, cx, cy, legenda, d]) => ({ id: uid(), tipo: 'foto', url: arte(t, a, b, cx, cy), thumb: null, legenda, criado_em: dias(d) }));
       s.midias.forEach((m) => (m.thumb = m.url));
     }
+    if (!s.usuarios) {
+      const d = (n) => new Date(Date.now() - n * 864e5).toISOString();
+      s.usuarios = [
+        { id: 'u-admin', nome: 'Railton', email: 'railton@meninosdavila.com', papel: 'admin', status: 'ativo', criado_em: d(60), ultimo_acesso: d(0) },
+        { id: 'u-carlos', nome: 'Carlos Mendes', email: 'carlos@email.com', papel: 'treinador', status: 'ativo', criado_em: d(30), ultimo_acesso: d(1) },
+        { id: 'u-joana', nome: 'Joana Ribeiro', email: 'joana@email.com', papel: 'treinador', status: 'ativo', criado_em: d(20), ultimo_acesso: d(3) },
+        { id: 'u-novo', nome: 'Felipe Rocha', email: 'felipe@email.com', papel: 'treinador', status: 'pendente', criado_em: d(0.2), ultimo_acesso: null },
+      ];
+    }
+    if (!s.auditoria) {
+      const h = (n) => new Date(Date.now() - n * 36e5).toISOString();
+      let id = 0;
+      s.auditoria = [
+        ['u-admin', 'Railton', 'usuario.aprovar', 'Aprovou o cadastro de Joana Ribeiro como treinador', 480],
+        ['u-carlos', 'Carlos Mendes', 'aluno.criar', 'Cadastrou o aluno Rafael Nascimento', 200],
+        ['u-joana', 'Joana Ribeiro', 'midia.enviar', 'Adicionou uma foto à galeria — "Treino de goleiros"', 90],
+        ['u-carlos', 'Carlos Mendes', 'pagamento.marcar', 'Marcou como paga a mensalidade de outubro/2026 — Bernardo Lima', 50],
+        ['u-admin', 'Railton', 'link.criar', 'Gerou o link público "Meninos da Vila FC · Responsáveis"', 30],
+        ['u-joana', 'Joana Ribeiro', 'pagamento.marcar', 'Marcou como paga a mensalidade de novembro/2026 — Arthur Gabriel Souza', 6],
+      ].map(([usuario_id, usuario_nome, acao, descricao, horas]) => ({ id: ++id, usuario_id, usuario_nome, acao, descricao, criado_em: h(horas) }));
+    }
     if (!s.links) {
       s.links = [{ id: uid(), token: 'demo-responsaveis-2026', titulo: 'Meninos da Vila FC · Responsáveis', ativo: true, nome_completo: false, expira_em: null, acessos: 37, criado_em: new Date(Date.now() - 9 * 864e5).toISOString() }];
     }
     return s;
   }
+
+  const PERFIL_KEY = 'mdv-demo-perfil';
+  let perfilDemo = 'admin';
+  try { perfilDemo = localStorage.getItem(PERFIL_KEY) || 'admin'; } catch {}
+
+  function usuarioDemo() {
+    const s = load();
+    if (perfilDemo === 'treinador') return s.usuarios.find((u) => u.id === 'u-carlos');
+    if (perfilDemo === 'pendente') return { id: 'u-visitante', nome: 'Visitante', email: 'visitante@email.com', papel: 'treinador', status: 'pendente' };
+    return s.usuarios.find((u) => u.id === 'u-admin');
+  }
+  function exigirAdmin() {
+    if (perfilDemo !== 'admin') throw Object.assign(new Error('Apenas administradores podem fazer isso.'), { codigo: 'SEM_PERMISSAO' });
+  }
+  function log(acao, descricao) {
+    const s = load();
+    const u = usuarioDemo();
+    const id = (s.auditoria.reduce((m, a) => Math.max(m, a.id), 0) || 0) + 1;
+    s.auditoria.push({ id, usuario_id: u.id, usuario_nome: u.nome, acao, descricao, criado_em: new Date().toISOString() });
+  }
+  const MESES_DEMO = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const mesExt = (c) => `${MESES_DEMO[Number(c.slice(5)) - 1]}/${c.slice(0, 4)}`;
+  const nomeAluno = (id) => load().alunos.find((a) => a.id === id)?.nome || 'aluno';
 
   function load() {
     if (db) return db;
@@ -296,18 +396,23 @@ const demo = (() => {
       await wait();
       const a = { id: uid(), ativo: true, criado_em: new Date().toISOString(), ...d };
       load().alunos.push(a);
+      log('aluno.criar', `Cadastrou o aluno ${a.nome}`);
       save();
       return a;
     },
     async atualizar(id, d) {
       await wait();
       const a = load().alunos.find((x) => x.id === id);
+      const mudouStatus = 'ativo' in d && d.ativo !== a.ativo;
       Object.assign(a, d);
+      log(mudouStatus ? 'aluno.status' : 'aluno.editar', mudouStatus ? `${a.ativo ? 'Reativou' : 'Inativou'} o aluno ${a.nome}` : `Editou os dados de ${a.nome}`);
       save();
       return a;
     },
     async excluir(id) {
       await wait();
+      exigirAdmin();
+      log('aluno.excluir', `Excluiu o aluno ${nomeAluno(id)} e seu histórico de pagamentos`);
       const s = load();
       s.alunos = s.alunos.filter((a) => a.id !== id);
       s.pagamentos = s.pagamentos.filter((p) => p.aluno_id !== id);
@@ -318,17 +423,23 @@ const demo = (() => {
       const s = load();
       s.pagamentos = s.pagamentos.filter((p) => !(p.aluno_id === aluno_id && p.competencia === competencia));
       s.pagamentos.push({ aluno_id, competencia, valor: cfg.mensalidade, pago_em: new Date().toISOString() });
+      log('pagamento.marcar', `Marcou como paga a mensalidade de ${mesExt(competencia)} — ${nomeAluno(aluno_id)}`);
       save();
     },
     async desfazer(aluno_id, competencia) {
       await wait(120);
       const s = load();
       s.pagamentos = s.pagamentos.filter((p) => !(p.aluno_id === aluno_id && p.competencia === competencia));
+      log('pagamento.desfazer', `Desfez o pagamento de ${mesExt(competencia)} — ${nomeAluno(aluno_id)}`);
       save();
     },
     async lembretes(c) {
       await wait(600);
+      exigirAdmin();
       const lista = await this.listar(c);
+      const n = lista.filter((a) => a.ativo && !a.pagamento && a.email).length;
+      log('lembretes.enviar', `Enviou ${n} lembretes de mensalidade de ${mesExt(c)} (demonstração)`);
+      save();
       return { enviados: lista.filter((a) => a.ativo && !a.pagamento && a.email).length, competencia: c, demo: true };
     },
 
@@ -341,8 +452,9 @@ const demo = (() => {
       await wait(500);
       const video = arquivo.type.startsWith('video/');
       const url = video ? URL.createObjectURL(arquivo) : await lerComoDataUrl(arquivo);
-      const m = { id: uid(), tipo: video ? 'video' : 'foto', url, thumb: video ? null : url, legenda: legenda || null, criado_em: new Date().toISOString(), temporario: video };
+      const m = { id: uid(), tipo: video ? 'video' : 'foto', url, thumb: video ? null : url, legenda: legenda || null, criado_em: new Date().toISOString(), temporario: video, enviado_por: usuarioDemo().id };
       load().midias.push(m);
+      log('midia.enviar', `Adicionou ${video ? 'um vídeo' : 'uma foto'} à galeria${legenda ? ` — "${legenda}"` : ''}`);
       save();
       return m;
     },
@@ -350,21 +462,27 @@ const demo = (() => {
       await wait();
       const id = String(url).match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/)?.[1];
       if (!id) throw new Error('Link do YouTube inválido.');
-      const m = { id: uid(), tipo: 'youtube', youtubeId: id, url: `https://www.youtube.com/watch?v=${id}`, thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`, legenda: legenda || null, criado_em: new Date().toISOString() };
+      const m = { id: uid(), tipo: 'youtube', youtubeId: id, url: `https://www.youtube.com/watch?v=${id}`, thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`, legenda: legenda || null, criado_em: new Date().toISOString(), enviado_por: usuarioDemo().id };
       load().midias.push(m);
+      log('midia.enviar', `Adicionou um vídeo do YouTube à galeria${legenda ? ` — "${legenda}"` : ''}`);
       save();
       return m;
     },
     async atualizarMidia(id, legenda) {
       await wait();
       const m = load().midias.find((x) => x.id === id);
+      if (perfilDemo !== 'admin' && m.enviado_por !== usuarioDemo().id) throw new Error('Você só pode alterar fotos e vídeos que você mesmo enviou.');
       m.legenda = legenda || null;
+      log('midia.editar', `Alterou a legenda de uma mídia para "${legenda || 'sem legenda'}"`);
       save();
       return m;
     },
     async excluirMidia(id) {
       await wait();
       const s = load();
+      const m = s.midias.find((x) => x.id === id);
+      if (m && perfilDemo !== 'admin' && m.enviado_por !== usuarioDemo().id) throw new Error('Você só pode alterar fotos e vídeos que você mesmo enviou.');
+      if (m) log('midia.excluir', `Excluiu ${m.tipo === 'foto' ? 'uma foto' : 'um vídeo'} da galeria${m.legenda ? ` — "${m.legenda}"` : ''}`);
       s.midias = s.midias.filter((m) => m.id !== id);
       save();
     },
@@ -372,6 +490,7 @@ const demo = (() => {
     /* links */
     async listarLinks() {
       await wait();
+      exigirAdmin();
       return [...load().links].sort((a, b) => b.criado_em.localeCompare(a.criado_em));
     },
     async criarLink(d) {
@@ -381,6 +500,7 @@ const demo = (() => {
       const dias = Number(d.validade_dias) || 0;
       const l = { id: uid(), token, titulo: d.titulo || null, ativo: true, nome_completo: !!d.nome_completo, expira_em: dias ? new Date(Date.now() + dias * 864e5).toISOString() : null, acessos: 0, criado_em: new Date().toISOString() };
       load().links.push(l);
+      log('link.criar', `Gerou o link público "${l.titulo || 'sem título'}"`);
       save();
       return l;
     },
@@ -388,14 +508,74 @@ const demo = (() => {
       await wait(120);
       const l = load().links.find((x) => x.id === id);
       Object.assign(l, d);
+      log('link.editar', `${'ativo' in d ? (d.ativo ? 'Reativou' : 'Desativou') : 'Alterou'} o link "${l.titulo || 'sem título'}"`);
       save();
       return l;
     },
     async excluirLink(id) {
       await wait();
       const s = load();
+      const l = s.links.find((x) => x.id === id);
+      if (l) log('link.excluir', `Excluiu o link público "${l.titulo || 'sem título'}"`);
       s.links = s.links.filter((l) => l.id !== id);
       save();
+    },
+
+    /* conta, equipe e histórico */
+    conta() {
+      const u = usuarioDemo();
+      return { id: u.id, nome: u.nome, email: u.email, papel: u.papel, status: u.status };
+    },
+    trocarPerfil(v) {
+      perfilDemo = ['admin', 'treinador', 'pendente'].includes(v) ? v : 'admin';
+      try { localStorage.setItem(PERFIL_KEY, perfilDemo); } catch {}
+    },
+    async listarUsuarios() {
+      await wait();
+      exigirAdmin();
+      const ordem = { pendente: 0, ativo: 1, bloqueado: 2 };
+      const usuarios = [...load().usuarios].sort((a, b) => ordem[a.status] - ordem[b.status] || a.nome.localeCompare(b.nome, 'pt-BR'));
+      return { usuarios, pendentes: usuarios.filter((u) => u.status === 'pendente').length };
+    },
+    async atualizarUsuario(id, d) {
+      await wait();
+      exigirAdmin();
+      const s = load();
+      if (id === usuarioDemo().id) throw new Error('Você não pode alterar o seu próprio acesso.');
+      const u = s.usuarios.find((x) => x.id === id);
+      const outrosAdmins = s.usuarios.filter((x) => x.id !== id && x.papel === 'admin' && x.status === 'ativo').length;
+      if (u.papel === 'admin' && u.status === 'ativo' && ((d.papel && d.papel !== 'admin') || d.status === 'bloqueado') && !outrosAdmins)
+        throw new Error('É preciso ter pelo menos um outro administrador ativo antes disso.');
+      const antes = { ...u };
+      Object.assign(u, d);
+      const nomes = { admin: 'administrador', treinador: 'treinador' };
+      if (antes.status === 'pendente' && u.status === 'ativo') log('usuario.aprovar', `Aprovou o cadastro de ${u.nome} como ${nomes[u.papel]}`);
+      else {
+        if (d.status && d.status !== antes.status) log(d.status === 'bloqueado' ? 'usuario.bloquear' : 'usuario.reativar', `${d.status === 'bloqueado' ? 'Bloqueou' : 'Reativou'} o acesso de ${u.nome}`);
+        if (d.papel && d.papel !== antes.papel) log('usuario.papel', `Alterou ${u.nome} de ${nomes[antes.papel]} para ${nomes[d.papel]}`);
+      }
+      save();
+      return u;
+    },
+    async removerUsuario(id) {
+      await wait();
+      exigirAdmin();
+      const s = load();
+      if (id === usuarioDemo().id) throw new Error('Você não pode remover a sua própria conta.');
+      const u = s.usuarios.find((x) => x.id === id);
+      log('usuario.remover', u.status === 'pendente' ? `Recusou o cadastro de ${u.nome}` : `Removeu a conta de ${u.nome}`);
+      s.usuarios = s.usuarios.filter((x) => x.id !== id);
+      save();
+    },
+    async listarAuditoria({ usuario, grupo, antes }) {
+      await wait();
+      exigirAdmin();
+      let itens = [...load().auditoria].sort((a, b) => b.id - a.id);
+      if (usuario) itens = itens.filter((a) => a.usuario_id === usuario);
+      if (grupo) itens = itens.filter((a) => a.acao.startsWith(grupo + '.'));
+      if (antes) itens = itens.filter((a) => a.id < Number(antes));
+      const pagina = itens.slice(0, 30);
+      return { itens: pagina, proximo: itens.length > 30 ? pagina[pagina.length - 1].id : null };
     },
 
     /* página pública */

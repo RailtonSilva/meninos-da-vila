@@ -1,4 +1,4 @@
-import { requireUser } from './supabase.js';
+import { requireUser, exigirAcesso } from './supabase.js';
 import { captureError, flushSentry } from './sentry.js';
 
 import { HttpError } from './errors.js';
@@ -20,11 +20,13 @@ export function check({ data, error }) {
 }
 
 /**
- * Cria um handler da Vercel com roteamento por método, autenticação e captura de erros.
- * @param {Record<string, Function>} handlers  ex.: { GET, POST }
- * @param {{ auth?: boolean }} opts            auth=true exige login do Supabase (padrão)
+ * Cria um handler da Vercel com roteamento por método, controle de acesso e captura de erros.
+ * @param {Record<string, Function>} handlers  ex.: { GET, POST }  — cada um recebe (req, res, { user, perfil })
+ * @param {object}  opts
+ * @param {true|'login'|false} [opts.auth=true]  true: login + perfil ATIVO · 'login': só login · false: público
+ * @param {boolean|string[]}   [opts.admin=false] exige papel admin (em todos os métodos ou só nos listados)
  */
-export function route(handlers, { auth = true } = {}) {
+export function route(handlers, { auth = true, admin = false } = {}) {
   return async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     const fn = handlers[req.method];
@@ -33,8 +35,13 @@ export function route(handlers, { auth = true } = {}) {
       return res.status(405).json({ erro: 'Método não permitido.' });
     }
     try {
-      const user = auth ? await requireUser(req) : null;
-      await fn(req, res, { user });
+      let ctx = { user: null, perfil: null };
+      if (auth === 'login') ctx.user = await requireUser(req);
+      else if (auth) {
+        const exigeAdmin = admin === true || (Array.isArray(admin) && admin.includes(req.method));
+        ctx = await exigirAcesso(req, { admin: exigeAdmin });
+      }
+      await fn(req, res, ctx);
     } catch (err) {
       const esperado = err instanceof HttpError; // erros previstos: mensagem vai para o usuário
       const status = esperado ? err.status : 500;
@@ -43,7 +50,9 @@ export function route(handlers, { auth = true } = {}) {
         await flushSentry();
       }
       if (!res.headersSent) {
-        res.status(status).json({ erro: esperado ? err.message : 'Erro interno. Tente novamente.' });
+        res.status(status).json(
+          esperado ? { erro: err.message, ...(err.codigo ? { codigo: err.codigo } : {}) } : { erro: 'Erro interno. Tente novamente.' }
+        );
       }
     }
   };

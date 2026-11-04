@@ -9,6 +9,9 @@ let midias = [];
 let ligado = false;
 let editando = null;
 
+/** Admin altera tudo; treinador só o que ele mesmo enviou (a API confere de novo). */
+const podeAlterar = (m) => api.ehAdmin() || (m.enviado_por && m.enviado_por === api.contaAtual()?.id);
+
 export async function iniciarGaleria() {
   if (!ligado) ligar();
   ligado = true;
@@ -28,10 +31,10 @@ function render() {
       ${m.tipo !== 'foto' ? `<span class="g-tag">${m.tipo === 'youtube' ? 'YouTube' : 'Vídeo'}</span>` : ''}
       <figcaption>
         <div><strong>${esc(m.legenda || 'Sem legenda')}</strong><small>${dataLonga(m.criado_em)}</small></div>
-        <span class="g-actions">
+        ${podeAlterar(m) ? `<span class="g-actions">
           <button class="icon-btn" data-action="legenda" title="Editar legenda" aria-label="Editar legenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
           <button class="icon-btn danger" data-action="excluir" title="Excluir" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
-        </span>
+        </span>` : ''}
       </figcaption>
     </figure>`
     )

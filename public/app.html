@@ -12,7 +12,16 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="demo-banner" id="demoBanner" hidden>Modo demonstração: dados fictícios salvos só neste navegador. Configure o Supabase para usar de verdade.</div>
+  <div class="demo-banner" id="demoBanner" hidden>
+    Modo demonstração: dados fictícios salvos só neste navegador.
+    <label class="demo-perfil">Ver como
+      <select id="demoPerfil">
+        <option value="admin">Administrador</option>
+        <option value="treinador">Treinador</option>
+        <option value="pendente">Cadastro pendente</option>
+      </select>
+    </label>
+  </div>
 
   <header class="topbar">
     <a class="brand" href="app.html">
@@ -20,7 +29,7 @@
       <span><strong>Meninos da Vila</strong><small>Futebol Clube</small></span>
     </a>
     <div class="topbar-right">
-      <span class="user-chip" id="userEmail"></span>
+      <span class="user-chip"><span id="userEmail"></span><em class="role-badge" id="userPapel"></em></span>
       <button class="btn btn-ghost btn-sm" id="btnSair">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
         Sair
@@ -37,11 +46,29 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
       <span>Galeria</span>
     </a>
-    <a href="#links">
+    <a href="#links" class="so-admin">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span>Link público</span>
     </a>
+    <a href="#equipe" class="so-admin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+      <span>Equipe</span><b class="tab-badge" id="badgePendentes" hidden></b>
+    </a>
   </nav>
+
+  <!-- Acesso ainda não liberado -->
+  <section class="espera" id="telaEspera" hidden>
+    <div class="espera-card">
+      <img src="img/escudo.jpg" alt="">
+      <span class="pill pend" id="esperaPill">Aguardando aprovação</span>
+      <h1 id="esperaTitulo">Seu cadastro foi recebido</h1>
+      <p id="esperaTexto">Um administrador da escolinha precisa liberar seu acesso. Você recebe um aviso por e-mail assim que for aprovado.</p>
+      <div class="espera-acoes">
+        <button class="btn btn-primary" id="btnVerificar">Já fui aprovado? Verificar</button>
+        <button class="btn btn-ghost" id="btnSairEspera">Sair</button>
+      </div>
+    </div>
+  </section>
 
   <main class="container">
    <div data-view="mensalidades">
@@ -59,7 +86,7 @@
         </div>
       </div>
       <div class="head-actions">
-        <button class="btn btn-outline" id="btnLembretes">
+        <button class="btn btn-outline so-admin" id="btnLembretes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
           Enviar lembretes
         </button>
@@ -197,6 +224,65 @@
       <div class="ball"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
       <h3>Nenhum link gerado</h3>
       <p>Clique em "Gerar novo link" e envie no grupo dos responsáveis.</p>
+    </div>
+   </div>
+   <!-- ===================== Equipe (só administrador) ===================== -->
+   <div data-view="equipe" hidden>
+    <section class="page-head">
+      <div>
+        <p class="eyebrow">Controle de acesso</p>
+        <h1 class="h1">Equipe e histórico</h1>
+      </div>
+      <div class="segmented" id="equipeAbas">
+        <button data-sub="membros" class="on">Membros</button>
+        <button data-sub="historico">Histórico</button>
+      </div>
+    </section>
+
+    <div data-sub-view="membros">
+      <div class="card convite-card">
+        <div>
+          <h3>Como adicionar um treinador</h3>
+          <p>Envie o endereço do site para a pessoa e peça para ela clicar em <strong>Criar conta</strong>. O cadastro aparece aqui para você aprovar.</p>
+        </div>
+        <div class="link-url"><input readonly id="linkCadastro" aria-label="Link de cadastro"><button class="btn btn-sm btn-primary" id="btnCopiarCadastro">Copiar</button></div>
+      </div>
+      <div id="listaPendentes"></div>
+      <div class="card">
+        <div class="list-head membros-head"><span>Pessoa</span><span>Papel</span><span>Último acesso</span><span style="text-align:right">Ações</span></div>
+        <ul class="list" id="listaMembros"></ul>
+      </div>
+      <div class="card info-card papeis-card">
+        <h3>O que cada papel pode fazer</h3>
+        <div class="papeis">
+          <div><strong>Treinador</strong>
+            <ul class="check-list"><li>Ver alunos e mensalidades</li><li>Cadastrar e editar alunos</li><li>Marcar e desfazer pagamentos</li><li>Enviar fotos e vídeos (e apagar os seus)</li></ul>
+          </div>
+          <div><strong>Administrador</strong>
+            <ul class="check-list"><li>Tudo o que o treinador faz</li><li>Excluir alunos e qualquer mídia</li><li>Enviar lembretes por e-mail</li><li>Links públicos, equipe e histórico</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div data-sub-view="historico" hidden>
+      <div class="card">
+        <div class="toolbar">
+          <select id="filtroUsuario" class="select-inline" aria-label="Filtrar por pessoa"><option value="">Todas as pessoas</option></select>
+          <select id="filtroGrupo" class="select-inline" aria-label="Filtrar por tipo">
+            <option value="">Todas as ações</option>
+            <option value="pagamento">Pagamentos</option>
+            <option value="aluno">Alunos</option>
+            <option value="midia">Galeria</option>
+            <option value="link">Links públicos</option>
+            <option value="lembretes">Lembretes</option>
+            <option value="usuario">Equipe</option>
+          </select>
+        </div>
+        <ul class="timeline" id="listaHistorico"></ul>
+        <div class="empty" id="historicoVazio" hidden><h3>Nada por aqui</h3><p>Nenhuma ação com esses filtros.</p></div>
+        <div class="mais"><button class="btn btn-outline btn-sm" id="btnMaisHistorico" hidden>Carregar mais</button></div>
+      </div>
     </div>
    </div>
   </main>

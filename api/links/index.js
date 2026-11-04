@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { route, readBody, check } from '../_lib/http.js';
 import { db } from '../_lib/supabase.js';
+import { registrar } from '../_lib/auditoria.js';
 
 const VALIDADES = { 0: null, 30: 30, 90: 90, 365: 365 };
 
@@ -12,7 +13,7 @@ export default route({
   },
 
   // POST /api/links { titulo, nome_completo, validade_dias: 0|30|90|365 } → novo link
-  async POST(req, res) {
+  async POST(req, res, ctx) {
     const b = readBody(req);
     const dias = VALIDADES[Number(b.validade_dias) || 0] ?? null;
     const registro = {
@@ -22,6 +23,7 @@ export default route({
       expira_em: dias ? new Date(Date.now() + dias * 864e5).toISOString() : null,
     };
     const link = await db().from('links_publicos').insert(registro).select().single().then(check);
+    await registrar(ctx, 'link.criar', `Gerou o link público "${link.titulo || 'sem título'}"${dias ? ` válido por ${dias} dias` : ''}`, { entidadeId: link.id });
     res.status(201).json(link);
   },
-});
+}, { admin: true });

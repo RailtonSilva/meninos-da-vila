@@ -1,9 +1,10 @@
 import { route, readBody, check } from '../_lib/http.js';
 import { db } from '../_lib/supabase.js';
+import { registrar } from '../_lib/auditoria.js';
 import { validarAluno, validarCompetencia, competenciaAtual } from '../_lib/validar.js';
 
 export default route({
-  // GET /api/alunos?competencia=2026-11 → alunos + situação da mensalidade no mês
+  // GET /api/alunos?competencia=2026-11 → alunos + situação da mensalidade no mês (admin e treinador)
   async GET(req, res) {
     const competencia = validarCompetencia(req.query.competencia || competenciaAtual());
     const [alunos, pagamentos] = await Promise.all([
@@ -17,10 +18,11 @@ export default route({
     });
   },
 
-  // POST /api/alunos → cadastra aluno
-  async POST(req, res) {
+  // POST /api/alunos → cadastra aluno (admin e treinador)
+  async POST(req, res, ctx) {
     const dados = validarAluno(readBody(req));
     const aluno = await db().from('alunos').insert(dados).select().single().then(check);
+    await registrar(ctx, 'aluno.criar', `Cadastrou o aluno ${aluno.nome}`, { entidadeId: aluno.id });
     res.status(201).json(aluno);
   },
 });

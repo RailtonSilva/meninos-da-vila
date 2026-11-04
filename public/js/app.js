@@ -2,6 +2,7 @@ import * as api from './api.js';
 import { $, $$, brl, esc, compAtual, compShift, compLabel, iniciais, avatarBg, toast, confirmar } from './ui.js';
 import { iniciarGaleria } from './galeria.js';
 import { iniciarLinks } from './links.js';
+import { iniciarEquipe, contarPendentes } from './equipe.js';
 
 const ICON = {
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
@@ -162,7 +163,7 @@ function linha(a) {
       ${acao}
       ${wa ? `<a class="icon-btn wa" href="${wa}" target="_blank" rel="noopener" title="Cobrar no WhatsApp" aria-label="Cobrar no WhatsApp">${ICON.wa}</a>` : ''}
       <button class="icon-btn" data-action="editar" title="Editar" aria-label="Editar">${ICON.edit}</button>
-      <button class="icon-btn danger" data-action="excluir" title="Excluir" aria-label="Excluir">${ICON.trash}</button>
+      ${api.ehAdmin() ? `<button class="icon-btn danger" data-action="excluir" title="Excluir" aria-label="Excluir">${ICON.trash}</button>` : ''}
     </div>
   </li>`;
 }
@@ -309,18 +310,45 @@ $('#btnSair').addEventListener('click', async () => {
   location.replace('index.html');
 });
 
-/* ---------- Navegação entre abas (#mensalidades, #galeria, #links) ---------- */
-const VIEWS = ['mensalidades', 'galeria', 'links'];
+/* ---------- Navegação entre abas ---------- */
+const VIEWS = ['mensalidades', 'galeria', 'links', 'equipe'];
+const SO_ADMIN = ['links', 'equipe'];
 function mostrarView() {
-  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'mensalidades';
+  let v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'mensalidades';
+  if (SO_ADMIN.includes(v) && !api.ehAdmin()) v = 'mensalidades';
   $$('[data-view]').forEach((el) => (el.hidden = el.dataset.view !== v));
   $$('.tabs a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === `#${v}`));
   window.scrollTo({ top: 0 });
   if (v === 'galeria') iniciarGaleria().catch(falha);
   if (v === 'links') iniciarLinks().catch(falha);
+  if (v === 'equipe') iniciarEquipe().catch(falha);
   if (v === 'mensalidades') carregar();
 }
 window.addEventListener('hashchange', mostrarView);
+
+/* ---------- Acesso ainda não liberado (pendente / bloqueado) ---------- */
+function mostrarEspera(conta) {
+  document.body.classList.add('modo-espera');
+  $('#telaEspera').hidden = false;
+  if (conta.status === 'bloqueado') {
+    $('#esperaPill').className = 'pill off';
+    $('#esperaPill').textContent = 'Acesso bloqueado';
+    $('#esperaTitulo').textContent = 'Seu acesso está bloqueado';
+    $('#esperaTexto').textContent = 'Fale com o administrador da escolinha para liberar sua conta novamente.';
+    $('#btnVerificar').hidden = true;
+  } else {
+    $('#esperaTitulo').textContent = `Olá${conta.nome ? ', ' + conta.nome.split(' ')[0] : ''}! Seu cadastro foi recebido`;
+  }
+}
+$('#btnVerificar').addEventListener('click', async () => {
+  const c = await api.minhaConta().catch(() => null);
+  if (c?.status === 'ativo') location.reload();
+  else toast('Ainda aguardando a aprovação de um administrador.');
+});
+$('#btnSairEspera').addEventListener('click', async () => {
+  await api.signOut();
+  location.replace('index.html');
+});
 
 /* ---------- Início ---------- */
 state.cfg = await api.init();
@@ -328,8 +356,31 @@ const session = await api.getSession();
 if (!session) {
   location.replace('index.html');
 } else {
-  $('#userEmail').textContent = session.user?.email || '';
-  $('#valorMens').textContent = brl(state.cfg.mensalidade);
-  $('#demoBanner').hidden = !state.cfg.demo;
-  mostrarView();
+  if (state.cfg.demo) {
+    $('#demoBanner').hidden = false;
+    let perfil = 'admin';
+    try { perfil = localStorage.getItem('mdv-demo-perfil') || 'admin'; } catch {}
+    $('#demoPerfil').value = perfil;
+    $('#demoPerfil').addEventListener('change', (e) => { api.demoTrocarPerfil(e.target.value); location.reload(); });
+  }
+  let conta;
+  try {
+    conta = await api.minhaConta();
+  } catch (err) {
+    falha(err);
+  }
+  if (conta && conta.status !== 'ativo') {
+    mostrarEspera(conta);
+  } else if (conta) {
+    document.body.dataset.papel = conta.papel;
+    $('#userEmail').textContent = conta.nome || conta.email;
+    $('#userPapel').textContent = conta.papel === 'admin' ? 'Administrador' : 'Treinador';
+    $('#valorMens').textContent = brl(state.cfg.mensalidade);
+    mostrarView();
+    if (conta.papel === 'admin') {
+      contarPendentes()
+        .then((n) => { $('#badgePendentes').textContent = n; $('#badgePendentes').hidden = !n; })
+        .catch(() => {});
+    }
+  }
 }

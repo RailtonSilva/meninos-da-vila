@@ -16,7 +16,7 @@ export const CAMINHO_VALIDO = /^\d{4}\/\d{2}\/[0-9a-f-]{36}\.(jpg|png|webp|mp4|m
 
 /** Formato entregue ao navegador (painel e página pública). */
 export function midiaParaCliente(m) {
-  const base = { id: m.id, tipo: m.tipo, legenda: m.legenda, criado_em: m.criado_em };
+  const base = { id: m.id, tipo: m.tipo, legenda: m.legenda, criado_em: m.criado_em, enviado_por: m.enviado_por ?? null };
   if (m.tipo === 'youtube') {
     const id = youtubeId(m.url);
     return { ...base, youtubeId: id, url: `https://www.youtube.com/watch?v=${id}`, thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` };

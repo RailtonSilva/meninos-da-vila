@@ -25,29 +25,64 @@
     </section>
 
     <section class="login-form-side">
-      <form class="login-form" id="formLogin" novalidate>
+      <div class="login-form">
         <div class="mobile-brand">
           <img src="img/escudo.jpg" alt="Escudo Meninos da Vila">
           <div class="brand"><span><strong>Meninos da Vila</strong><small style="color:var(--green-700)">Futebol Clube</small></span></div>
         </div>
-        <h1>Bem-vindo de volta</h1>
-        <p class="sub">Entre para gerenciar alunos e mensalidades.</p>
 
-        <p class="form-error" id="erro" hidden></p>
+        <div class="segmented auth-tabs" role="tablist">
+          <button type="button" data-modo="entrar" class="on">Entrar</button>
+          <button type="button" data-modo="cadastro">Criar conta</button>
+        </div>
 
-        <label class="field">E-mail
-          <input type="email" name="email" autocomplete="email" placeholder="voce@email.com" required>
-        </label>
-        <label class="field">Senha
-          <input type="password" name="senha" autocomplete="current-password" placeholder="••••••••" required>
-        </label>
-        <button class="btn btn-primary btn-block" type="submit" id="btnEntrar" style="height:50px;margin-top:6px">Entrar</button>
+        <!-- Entrar -->
+        <form id="formLogin" novalidate>
+          <h1>Bem-vindo de volta</h1>
+          <p class="sub">Entre para gerenciar alunos e mensalidades.</p>
+          <p class="form-error" id="erro" hidden></p>
+          <label class="field">E-mail
+            <input type="email" name="email" autocomplete="email" placeholder="voce@email.com" required>
+          </label>
+          <label class="field">Senha
+            <input type="password" name="senha" autocomplete="current-password" placeholder="••••••••" required>
+          </label>
+          <button class="btn btn-primary btn-block" type="submit" id="btnEntrar" style="height:50px;margin-top:6px">Entrar</button>
+        </form>
+
+        <!-- Criar conta -->
+        <form id="formCadastro" novalidate hidden>
+          <h1>Criar conta</h1>
+          <p class="sub">Para treinadores da escolinha. Seu acesso é liberado depois que um administrador aprovar.</p>
+          <p class="form-error" id="erroCadastro" hidden></p>
+          <label class="field">Nome
+            <input name="nome" autocomplete="name" placeholder="Seu nome" maxlength="80" required>
+          </label>
+          <label class="field">E-mail
+            <input type="email" name="email" autocomplete="email" placeholder="voce@email.com" required>
+          </label>
+          <label class="field">Senha
+            <input type="password" name="senha" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" minlength="8" required>
+          </label>
+          <label class="field">Confirme a senha
+            <input type="password" name="senha2" autocomplete="new-password" placeholder="Repita a senha" required>
+          </label>
+          <button class="btn btn-primary btn-block" type="submit" id="btnCadastrar" style="height:50px;margin-top:6px">Criar conta</button>
+        </form>
+
+        <!-- Cadastro enviado -->
+        <div class="auth-ok" id="cadastroOk" hidden>
+          <div class="auth-ok-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h1>Cadastro enviado!</h1>
+          <p class="sub" id="cadastroOkTexto"></p>
+          <button class="btn btn-outline btn-block" type="button" id="btnVoltarLogin">Voltar para entrar</button>
+        </div>
 
         <p class="demo-note" id="demoNote" hidden>
           <strong>Modo demonstração.</strong> O backend ainda não está configurado, então qualquer e-mail e senha entram com dados fictícios.
         </p>
         <p class="login-foot">© Meninos da Vila Futebol Clube</p>
-      </form>
+      </div>
     </section>
   </main>
   <script type="module" src="js/login.js"></script>

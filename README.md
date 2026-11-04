@@ -13,7 +13,9 @@ Sistema da escolinha para cadastrar alunos e controlar quem está em dia com a m
 
 ## O que o sistema faz
 
-- Login do treinador (Supabase Auth).
+- Login com dois perfis, **Administrador** e **Treinador**, e **cadastro livre com aprovação**: quem cria conta fica bloqueado até um administrador aprovar.
+- **Equipe:** aprovar ou recusar cadastros, trocar o papel, bloquear, reativar e remover contas.
+- **Histórico:** registro de quem fez o quê e quando (pagamentos, alunos, galeria, links, equipe), com filtros por pessoa e por tipo de ação.
 - Cadastro, edição, inativação e exclusão de alunos, com responsável, WhatsApp, e-mail e observações.
 - Categoria calculada pela data de nascimento (Sub-7, Sub-9, … Sub-17).
 - Painel por mês: ativos, em dia, pendentes, valor arrecadado e previsto.
@@ -23,6 +25,27 @@ Sistema da escolinha para cadastrar alunos e controlar quem está em dia com a m
 - Busca, filtros (todos, em dia, pendentes, inativos) e filtro por categoria.
 - **Galeria:** envio de fotos e vídeos (arrastar e soltar ou escolher no celular), vídeos do YouTube, legendas e visualizador em tela cheia. Fotos grandes são reduzidas automaticamente antes do envio.
 - **Link público para os responsáveis:** o treinador gera um link de acesso livre (sem login) com a lista de alunos ativos, quem está em dia com a data do pagamento, quem está pendente e a galeria. É possível copiar, enviar pelo WhatsApp, definir validade, desativar e excluir.
+### Quem pode fazer o quê
+
+| Ação | Treinador | Administrador |
+|---|:---:|:---:|
+| Ver alunos e mensalidades | ✅ | ✅ |
+| Cadastrar e editar alunos | ✅ | ✅ |
+| Marcar e desfazer pagamentos | ✅ | ✅ |
+| Enviar fotos e vídeos | ✅ | ✅ |
+| Editar ou excluir mídia | só as suas | todas |
+| Excluir alunos | — | ✅ |
+| Enviar lembretes por e-mail | — | ✅ |
+| Links públicos | — | ✅ |
+| Equipe (aprovar, bloquear, papéis) | — | ✅ |
+| Histórico | — | ✅ |
+
+As permissões são conferidas **na API** (`api/_lib/supabase.js → exigirAcesso`), não só escondidas na tela. Regras de segurança:
+- **Você não altera o próprio acesso:** ninguém consegue mudar o próprio papel ou se bloquear.
+- **Sempre há um administrador:** a escolinha nunca fica sem pelo menos um administrador ativo.
+- **Conta pendente ou bloqueada:** recebe `403` em todas as rotas e vê uma tela de espera.
+- **Avisos por e-mail:** os administradores recebem um aviso de cada novo cadastro, e a pessoa recebe outro quando é aprovada (via Resend, se configurado).
+
 ### Privacidade do link público
 A página expõe dados de crianças a quem tiver o link, então ela vem protegida por padrão:
 - **Nomes:** abreviados ("Arthur S."); o nome completo é opcional, link a link.
@@ -38,16 +61,19 @@ Recomendado: avise os responsáveis e peça o consentimento deles (LGPD) antes d
 
 ```
 public/               → front-end estático (servido pela Vercel)
-  index.html          → login
-  app.html            → painel (abas Mensalidades, Galeria e Link público)
+  index.html          → login e criação de conta
+  app.html            → painel (abas Mensalidades, Galeria, Link público e Equipe)
   publico.html        → página dos responsáveis (abre com ?t=TOKEN)
   css/style.css
   js/api.js           → camada de dados (API real ou modo demonstração)
   js/ui.js            → avisos, confirmação, visualizador de fotos e vídeos
-  js/login.js, js/app.js, js/galeria.js, js/links.js, js/publico.js
+  js/login.js, js/app.js, js/galeria.js, js/links.js, js/equipe.js, js/publico.js
   img/escudo.jpg
 api/                  → funções serverless Node.js (Vercel)
   config.js           → configuração pública para o navegador
+  conta.js            → quem está logado (papel e situação)
+  usuarios/           → equipe: listar, aprovar, bloquear, mudar papel, remover
+  auditoria.js        → histórico de ações (paginado, com filtros)
   alunos/index.js     → GET lista do mês · POST cadastra
   alunos/[id].js      → PUT edita · DELETE exclui
   pagamentos.js       → POST marca pago · DELETE desfaz
@@ -55,9 +81,10 @@ api/                  → funções serverless Node.js (Vercel)
   midias/             → galeria (URL de envio assinada, cadastro, legenda, exclusão)
   links/              → links públicos (gerar, ativar/desativar, excluir)
   publico/[token].js  → dados da página dos responsáveis (sem login)
-  _lib/               → Supabase, Sentry, validação, utilidades HTTP
+  _lib/               → Supabase + controle de acesso, histórico, e-mail, Sentry, validação
 supabase/schema.sql   → tabelas, segurança e bucket da galeria (instalação nova)
-supabase/002_compartilhamento.sql → só o que é novo (para quem já rodou o schema antes)
+supabase/002_compartilhamento.sql → link público e galeria (para quem já rodou o schema antes)
+supabase/003_acesso.sql → perfis, aprovação e histórico (para quem já rodou o schema antes)
 vercel.json           → pasta pública, cron, cabeçalhos de segurança
 ```
 
@@ -68,15 +95,18 @@ vercel.json           → pasta pública, cron, cabeçalhos de segurança
 ## Passo a passo
 
 ### 1. Ver o visual agora (sem configurar nada)
-Abra a pasta no VS Code e rode o Live Server na pasta `public`, ou execute `npm run demo`. Qualquer e-mail e senha entram no modo demonstração.
+Abra a pasta no VS Code e rode o Live Server na pasta `public`, ou execute `npm run demo`. Qualquer e-mail e senha entram no modo demonstração. Na faixa verde do topo, **"Ver como"** troca entre Administrador, Treinador e Cadastro pendente, para testar as permissões.
 
 ### 2. Supabase
 1. Crie um projeto em supabase.com.
 2. Em **SQL Editor**, rode o arquivo `supabase/schema.sql`. Ele já cria o bucket `galeria` no Storage.
-   *Já tinha rodado a versão anterior?* Rode só o `supabase/002_compartilhamento.sql`.
-3. Em **Authentication → Users → Add user**, crie o seu usuário (e-mail e senha) e marque *Auto Confirm User*.
-4. Em **Authentication → Sign In / Providers**, desative **Allow new users to sign up**, para ninguém mais criar conta.
-5. Em **Project Settings → API**, copie a `URL`, a chave `anon` e a `service_role`.
+   *Já tinha rodado uma versão anterior?* Rode só os arquivos novos, em ordem: `002_compartilhamento.sql` (se ainda não rodou) e depois `003_acesso.sql`. Quem já tinha login vira **administrador** automaticamente.
+   ⚠️ Rode sempre pelo **SQL Editor do painel do Supabase**. Algumas extensões e ferramentas não entendem `create function` e dão erro de "sql parser".
+3. Em **Authentication → Users → Add user**, crie o seu usuário (e-mail e senha) e marque *Auto Confirm User*. Numa instalação nova, **o primeiro usuário vira administrador automaticamente**.
+4. Em **Authentication → Sign In / Providers**, deixe **Allow new users to sign up** LIGADO e **Confirm email** ligado. Ninguém acessa nada sem a sua aprovação, porque as contas novas nascem como pendentes.
+5. Em **Authentication → URL Configuration**, coloque o endereço do site em **Site URL** (ex.: `https://meninosdavila.com.br`) e adicione o mesmo endereço em **Redirect URLs**. É para onde o link de confirmação de e-mail leva.
+6. *(Recomendado)* Em **Authentication → Emails → SMTP Settings**, use o Resend como SMTP (host `smtp.resend.com`, porta `465`, usuário `resend`, senha = sua API key do Resend). O e-mail padrão do Supabase tem limite de poucos envios por hora.
+7. Em **Project Settings → API**, copie a `URL`, a chave `anon` e a `service_role`.
 
 ### 3. GitHub
 ```bash
@@ -118,7 +148,7 @@ Gere um segredo com `openssl rand -hex 32` e configure em `CRON_SECRET`. A Verce
 
 ## API
 
-Todas as rotas exigem `Authorization: Bearer <token do Supabase>`, exceto `/api/config`.
+Todas as rotas exigem `Authorization: Bearer <token do Supabase>` e uma conta **ativa**, exceto `/api/config`, `/api/publico` e `/api/conta`. *(admin)* = só administrador.
 
 | Método | Rota | Descrição |
 |---|---|---|
@@ -137,5 +167,12 @@ Todas as rotas exigem `Authorization: Bearer <token do Supabase>`, exceto `/api/
 | GET / POST | `/api/links` | Lista / gera link público `{ titulo, nome_completo, validade_dias }` |
 | PUT / DELETE | `/api/links/:id` | Ativa, desativa, troca nome completo / exclui |
 | GET | `/api/publico/:token?competencia=` | **Sem login.** Dados da página dos responsáveis |
+| GET | `/api/conta` | Quem está logado (funciona mesmo com cadastro pendente) |
+| GET | `/api/usuarios` | Equipe *(admin)* |
+| PUT | `/api/usuarios/:id` | `{ papel?, status? }` aprova, bloqueia, reativa, muda papel *(admin)* |
+| DELETE | `/api/usuarios/:id` | Recusa cadastro ou remove conta *(admin)* |
+| GET | `/api/auditoria?usuario=&grupo=&antes=` | Histórico paginado *(admin)* |
+
+Respostas de acesso negado trazem um `codigo`: `SEM_LOGIN` (401), `PENDENTE`, `BLOQUEADO` ou `SEM_PERMISSAO` (403).
 
 **Limites da galeria:** fotos até 15 MB e vídeos até 50 MB (limite por arquivo do plano gratuito do Supabase). Para vídeos maiores, use um link do YouTube; pode ser "não listado".

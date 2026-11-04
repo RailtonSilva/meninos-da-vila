@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { route, readBody, check, HttpError } from './_lib/http.js';
-import { db, requireUser } from './_lib/supabase.js';
+import { db, exigirAcesso } from './_lib/supabase.js';
+import { registrar } from './_lib/auditoria.js';
 import { validarCompetencia, competenciaAtual, valorMensalidade } from './_lib/validar.js';
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -14,12 +15,13 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
  */
 async function enviar(req, res) {
   let competencia;
+  let ctx = null; // null = envio automático (cron)
   if (req.method === 'GET') {
     const secret = process.env.CRON_SECRET;
     if (!secret || req.headers.authorization !== `Bearer ${secret}`) throw new HttpError(401, 'Não autorizado.');
     competencia = competenciaAtual();
   } else {
-    await requireUser(req);
+    ctx = await exigirAcesso(req, { admin: true });
     competencia = validarCompetencia(readBody(req).competencia || competenciaAtual());
   }
 
@@ -54,6 +56,9 @@ async function enviar(req, res) {
     if (error) throw new Error(`Resend: ${error.message}`);
     enviados += lote.length;
   }
+  await registrar(ctx, 'lembretes.enviar', `${ctx ? 'Enviou' : 'Envio automático:'} ${enviados} lembrete${enviados === 1 ? '' : 's'} de mensalidade de ${mesNome}`, {
+    dados: { competencia, enviados },
+  });
   res.status(200).json({ enviados, competencia });
 }
 

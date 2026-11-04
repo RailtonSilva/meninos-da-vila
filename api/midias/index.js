@@ -2,6 +2,7 @@ import { route, readBody, check, HttpError } from '../_lib/http.js';
 import { db } from '../_lib/supabase.js';
 import { CAMINHO_VALIDO, midiaParaCliente } from '../_lib/midias.js';
 import { youtubeId } from '../_lib/validar.js';
+import { registrar } from '../_lib/auditoria.js';
 
 const legendaLimpa = (l) => (l == null ? null : String(l).trim().slice(0, 200) || null);
 
@@ -14,7 +15,7 @@ export default route({
 
   // POST /api/midias → registra arquivo já enviado ao Storage, ou um vídeo do YouTube
   //   { tipo: 'foto'|'video', caminho, legenda }  |  { tipo: 'youtube', url, legenda }
-  async POST(req, res) {
+  async POST(req, res, ctx) {
     const b = readBody(req);
     let registro;
     if (b.tipo === 'youtube') {
@@ -27,7 +28,10 @@ export default route({
     } else {
       throw new HttpError(400, 'Tipo de mídia inválido.');
     }
+    registro.enviado_por = ctx.perfil.id;
     const midia = await db().from('midias').insert(registro).select().single().then(check);
+    const oque = { foto: 'uma foto', video: 'um vídeo', youtube: 'um vídeo do YouTube' }[midia.tipo];
+    await registrar(ctx, 'midia.enviar', `Adicionou ${oque} à galeria${midia.legenda ? ` — "${midia.legenda}"` : ''}`, { entidadeId: midia.id });
     res.status(201).json(midiaParaCliente(midia));
   },
 });

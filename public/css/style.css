@@ -484,3 +484,87 @@ img { display: block; max-width: 100%; }
   .pub-main { padding: 18px 14px 40px; }
   .pub-list li { padding: 12px 14px; }
 }
+
+/* =====================================================================
+   Controle de acesso: cadastro, espera de aprovação, papéis, equipe e histórico
+   ===================================================================== */
+/* Ações exclusivas do administrador somem para o treinador (a API também bloqueia) */
+body[data-papel="treinador"] .so-admin { display: none !important; }
+body.modo-espera .topbar-right .user-chip, body.modo-espera .tabs, body.modo-espera main.container { display: none !important; }
+
+.demo-banner { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.demo-perfil { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.demo-perfil select { height: 28px; border-radius: 8px; border: 1px solid rgba(6, 50, 15, .3); background: rgba(255, 255, 255, .7); padding: 0 6px; font-weight: 600; font-size: 12.5px; color: #06320f; }
+
+.user-chip { display: inline-flex; align-items: center; gap: 8px; }
+.role-badge { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 3px 8px; border-radius: 6px; background: rgba(59, 227, 106, .18); color: var(--green-400); }
+.role-badge.admin { background: var(--blue-100); color: var(--blue-700); }
+.role-badge.treinador { background: var(--green-100); color: var(--green-700); }
+.tab-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--red-600); color: #fff; font-size: 11.5px; font-weight: 700; display: inline-grid; place-items: center; }
+@media (max-width: 720px) { .tabs a { position: relative; } .tab-badge { position: absolute; top: 6px; left: calc(50% + 6px); } }
+
+/* Login: Entrar / Criar conta */
+.auth-tabs { margin-bottom: 28px; }
+.auth-tabs button { flex: 1; justify-content: center; height: 40px; font-size: 14.5px; }
+.auth-ok { text-align: center; }
+.auth-ok-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--green-100); color: var(--green-700); display: grid; place-items: center; margin: 0 auto 18px; }
+.auth-ok-icon svg { width: 30px; height: 30px; }
+
+/* Tela de espera */
+.espera { min-height: calc(100dvh - 72px); display: grid; place-items: center; padding: 32px 20px; }
+.espera-card { max-width: 460px; text-align: center; background: var(--card); border-radius: 28px; box-shadow: var(--shadow); padding: 40px 32px; }
+.espera-card img { width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 18px; }
+.espera-card h1 { font-family: var(--display); font-size: 26px; letter-spacing: -.02em; margin: 14px 0 8px; }
+.espera-card p { color: var(--ink-2); }
+.espera-acoes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+
+/* Equipe */
+.convite-card { display: grid; grid-template-columns: 1fr minmax(260px, 420px); gap: 18px; align-items: center; padding: 20px 22px; margin-bottom: 16px; }
+.convite-card h3 { font-family: var(--display); font-size: 17px; margin-bottom: 4px; }
+.convite-card p { font-size: 14px; color: var(--ink-2); }
+@media (max-width: 860px) { .convite-card { grid-template-columns: 1fr; } }
+
+.pendentes-card { padding: 18px 20px; margin-bottom: 16px; border: 2px solid var(--amber-100); }
+.pendentes-card h3 { font-family: var(--display); font-size: 17px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dot-alerta { width: 10px; height: 10px; border-radius: 50%; background: var(--amber-600); box-shadow: 0 0 0 4px var(--amber-100); }
+.pendente { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.pendente .who { flex: 1; min-width: 180px; }
+.pendente .who strong { display: block; }
+.pendente .who small { color: var(--ink-3); font-size: 12.5px; }
+.pendente-acoes { display: flex; gap: 6px; }
+
+.membros-head, .row.membro { grid-template-columns: minmax(220px, 2fr) 170px 150px 190px; }
+.row.membro .cell .meta { margin: 0; }
+.voce { font-style: normal; font-size: 11px; font-weight: 700; color: var(--blue-700); background: var(--blue-100); border-radius: 6px; padding: 1px 6px; margin-left: 4px; vertical-align: 2px; }
+.select-inline { height: 40px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--card); padding: 0 10px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.select-inline.sm { height: 34px; font-size: 13.5px; }
+.select-inline:focus { outline: none; border-color: var(--blue-700); box-shadow: 0 0 0 4px var(--blue-100); }
+@media (max-width: 960px) {
+  .row.membro { grid-template-columns: 1fr auto; grid-template-areas: "aluno aluno" "papel acesso" "actions actions"; }
+  .row.membro > :nth-child(2) { grid-area: papel; padding-left: 54px; }
+  .row.membro > :nth-child(3) { grid-area: acesso; text-align: right; }
+}
+@media (max-width: 420px) { .row.membro > :nth-child(2) { padding-left: 0; } }
+
+.papeis-card { margin-top: 16px; }
+.papeis { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.papeis strong { display: block; margin-bottom: 8px; }
+@media (max-width: 640px) { .papeis { grid-template-columns: 1fr; } }
+
+/* Histórico (linha do tempo) */
+.timeline { list-style: none; padding: 8px 20px 4px; }
+.tl-dia { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); padding: 18px 0 8px; }
+.tl-dia:first-child { padding-top: 8px; }
+.tl-item { display: flex; gap: 14px; padding: 10px 0; position: relative; }
+.tl-item::before { content: ""; position: absolute; left: 17px; top: 46px; bottom: -10px; width: 2px; background: var(--line); }
+.tl-item:has(+ .tl-dia)::before, .tl-item:last-child::before { display: none; }
+.tl-icon { width: 36px; height: 36px; border-radius: 10px; flex: none; display: grid; place-items: center; }
+.tl-icon svg { width: 18px; height: 18px; }
+.tl-icon.blue { background: var(--blue-100); color: var(--blue-700); }
+.tl-icon.green { background: var(--green-100); color: var(--green-700); }
+.tl-icon.red { background: var(--red-100); color: var(--red-600); }
+.tl-body p { font-size: 14.5px; color: var(--ink); }
+.tl-body small { font-size: 12.5px; color: var(--ink-3); }
+.tl-body small strong { color: var(--ink-2); font-weight: 600; }
+.mais { display: flex; justify-content: center; padding: 6px 0 18px; }
+@media (max-width: 640px) { .user-chip { display: none !important; } }
