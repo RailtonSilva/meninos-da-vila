@@ -42,6 +42,18 @@ export function reportError(err) {
   window.__sentry?.captureException(err);
 }
 
+/** Diagnóstico: o Sentry do navegador está ativo? */
+export const sentryAtivo = () => Boolean(window.__sentry);
+
+/** Gera um erro de propósito no servidor (só admin) para conferir o Sentry da API. */
+export async function testeSentryServidor() {
+  if (cfg.demo) return 'modo demonstração: sem Sentry';
+  try {
+    await request('/api/sentry-teste');
+  } catch (err) {
+    return err.message;
+  }
+}
 /* ---------------- Autenticação ---------------- */
 
 export async function getSession() {

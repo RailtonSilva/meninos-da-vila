@@ -378,6 +378,13 @@ if (!session) {
     $('#valorMens').textContent = brl(state.cfg.mensalidade);
     mostrarView();
     if (conta.papel === 'admin') {
+            // Teste do Sentry: no console do navegador (F12), digite  testarSentry()
+      window.testarSentry = async () => {
+        if (!api.sentryAtivo()) return '⚠️ Sentry do navegador NÃO está ativo (confira SENTRY_DSN_FRONTEND na Vercel e faça Redeploy).';
+        api.reportError(new Error(`Teste do Sentry (navegador) — ${new Date().toISOString()}`));
+        const srv = await api.testeSentryServidor();
+        return `✓ Erro de teste do navegador enviado. Servidor respondeu: "${srv}". Confira os dois em Issues no Sentry em até 1 minuto.`;
+      };
       contarPendentes()
         .then((n) => { $('#badgePendentes').textContent = n; $('#badgePendentes').hidden = !n; })
         .catch(() => {});

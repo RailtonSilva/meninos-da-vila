@@ -22,6 +22,7 @@ import publico from './_rotas/publico/[token].js';
 import usuarios from './_rotas/usuarios/index.js';
 import usuario from './_rotas/usuarios/[id].js';
 import auditoria from './_rotas/auditoria.js';
+import sentryTeste from './_rotas/sentry-teste.js';
 
 // [padrão do caminho depois de /api/, handler, nomes dos parâmetros capturados]
 // A ordem importa: "midias/upload" vem antes de "midias/:id".
@@ -41,6 +42,7 @@ const ROTAS = [
   [/^usuarios$/, usuarios],
   [/^usuarios\/([^/]+)$/, usuario, ['id']],
   [/^auditoria$/, auditoria],
+  [/^sentry-teste$/, sentryTeste],
 ];
 
 /** Descobre o caminho pedido (ex.: "alunos/123"), venha ele da URL original ou do rewrite. */
