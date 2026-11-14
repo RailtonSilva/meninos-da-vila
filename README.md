@@ -147,4 +147,4 @@ O projeto foi desenvolvido **com apoio de IA**. O meu papel foi definir os requi
 ## Autor
 
 **Railton da Silva Maranhão** · QA Engineer
-[LinkedIn](https://www.linkedin.com/in/SEU-PERFIL) · [GitHub](https://github.com/RailtonSilva)
+[LinkedIn](https://www.linkedin.com/in/railton-silva-543072289/) · [GitHub](https://github.com/RailtonSilva)
