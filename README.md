@@ -1,173 +1,150 @@
-# Meninos da Vila FC — Gestão de alunos e mensalidades
+<div align="center">
 
-Sistema da escolinha para cadastrar alunos e controlar quem está em dia com a mensalidade de **R$ 40,00**.
+<img src="public/img/escudo.jpg" alt="Escudo Meninos da Vila FC" width="110">
 
-| Serviço | Papel |
-|---|---|
-| **GitHub** | Versionamento |
-| **Vercel** | Hospedagem do front + API Node.js (`/api`) + cron mensal |
-| **Cloudflare** | Domínio, DNS e proteção |
-| **Supabase** | Banco de dados (PostgreSQL) e login |
-| **Resend** | E-mails de lembrete de mensalidade |
-| **Sentry** | Monitoramento de erros (front e API) |
+# Meninos da Vila FC · Gestão de alunos e mensalidades
 
-## O que o sistema faz
+**Sistema web para uma escolinha de futebol real: cadastro de alunos, controle de mensalidades, área pública para os responsáveis e controle de acesso por perfil, com testes E2E automatizados.**
 
-- Login com dois perfis, **Administrador** e **Treinador**, e **cadastro livre com aprovação**: quem cria conta fica bloqueado até um administrador aprovar.
-- **Equipe:** aprovar ou recusar cadastros, trocar o papel, bloquear, reativar e remover contas.
-- **Histórico:** registro de quem fez o quê e quando (pagamentos, alunos, galeria, links, equipe), com filtros por pessoa e por tipo de ação.
-- Cadastro, edição, inativação e exclusão de alunos, com responsável, WhatsApp, e-mail e observações.
-- Categoria calculada pela data de nascimento (Sub-7, Sub-9, … Sub-17).
-- Painel por mês: ativos, em dia, pendentes, valor arrecadado e previsto.
-- Marcar ou desfazer o pagamento do mês com um clique.
-- Botão de cobrança no WhatsApp, com mensagem pronta, para quem está pendente.
-- Lembrete por e-mail para os pendentes: pelo botão do painel e automático todo dia 10 (Vercel Cron).
-- Busca, filtros (todos, em dia, pendentes, inativos) e filtro por categoria.
-- **Galeria:** envio de fotos e vídeos (arrastar e soltar ou escolher no celular), vídeos do YouTube, legendas e visualizador em tela cheia. Fotos grandes são reduzidas automaticamente antes do envio.
-- **Link público para os responsáveis:** o treinador gera um link de acesso livre (sem login) com a lista de alunos ativos, quem está em dia com a data do pagamento, quem está pendente e a galeria. É possível copiar, enviar pelo WhatsApp, definir validade, desativar e excluir.
-### Quem pode fazer o quê
+![Testes E2E](https://img.shields.io/badge/Cypress-22%20casos%20E2E-04C38E?logo=cypress&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%2B%20Auth-3FCF8E?logo=supabase&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-deploy-000?logo=vercel)
+![Sentry](https://img.shields.io/badge/Sentry-monitoramento-362D59?logo=sentry)
 
-| Ação | Treinador | Administrador |
-|---|:---:|:---:|
-| Ver alunos e mensalidades | ✅ | ✅ |
-| Cadastrar e editar alunos | ✅ | ✅ |
-| Marcar e desfazer pagamentos | ✅ | ✅ |
-| Enviar fotos e vídeos | ✅ | ✅ |
-| Editar ou excluir mídia | só as suas | todas |
-| Excluir alunos | — | ✅ |
-| Enviar lembretes por e-mail | — | ✅ |
-| Links públicos | — | ✅ |
-| Equipe (aprovar, bloquear, papéis) | — | ✅ |
-| Histórico | — | ✅ |
+### [▶ Abrir a demonstração](https://LINK-DA-DEMO.vercel.app)
+<sub>Dados fictícios: entre com qualquer e-mail e senha. Na faixa verde, "Ver como" troca entre Administrador, Treinador e Cadastro pendente.</sub>
 
-As permissões são conferidas **na API** (`api/_lib/supabase.js → exigirAcesso`), não só escondidas na tela. Regras de segurança:
-- **Você não altera o próprio acesso:** ninguém consegue mudar o próprio papel ou se bloquear.
-- **Sempre há um administrador:** a escolinha nunca fica sem pelo menos um administrador ativo.
-- **Conta pendente ou bloqueada:** recebe `403` em todas as rotas e vê uma tela de espera.
-- **Avisos por e-mail:** os administradores recebem um aviso de cada novo cadastro, e a pessoa recebe outro quando é aprovada (via Resend, se configurado).
-
-### Privacidade do link público
-A página expõe dados de crianças a quem tiver o link, então ela vem protegida por padrão:
-- **Nomes:** abreviados ("Arthur S."); o nome completo é opcional, link a link.
-- **Dados que nunca aparecem:** telefone, e-mail, data de nascimento e observações.
-- **Token do link:** 24 caracteres aleatórios. O link pode ser desativado ou excluído na hora e pode ter validade.
-- **Buscadores:** a página não é indexada (`noindex`).
-
-Recomendado: avise os responsáveis e peça o consentimento deles (LGPD) antes de compartilhar fotos e nomes.
-
-- **Modo demonstração:** sem backend configurado (abrindo com o Live Server, por exemplo), o sistema roda com dados fictícios para você ver o visual.
-
-## Estrutura
-
-```
-public/               → front-end estático (servido pela Vercel)
-  index.html          → login e criação de conta
-  app.html            → painel (abas Mensalidades, Galeria, Link público e Equipe)
-  publico.html        → página dos responsáveis (abre com ?t=TOKEN)
-  css/style.css
-  js/api.js           → camada de dados (API real ou modo demonstração)
-  js/ui.js            → avisos, confirmação, visualizador de fotos e vídeos
-  js/login.js, js/app.js, js/galeria.js, js/links.js, js/equipe.js, js/publico.js
-  img/escudo.jpg
-api/
-  index.js            → ÚNICA função da Vercel: recebe /api/* e encaminha para a rota certa
-  _rotas/             → as rotas (pastas com "_" não contam como função)
-    config.js, conta.js, pagamentos.js, lembretes.js, auditoria.js
-    alunos/  midias/  links/  publico/  usuarios/
-  _lib/               → Supabase + controle de acesso, histórico, e-mail, Sentry, validação
-supabase/schema.sql   → tabelas, segurança e bucket da galeria (instalação nova)
-supabase/002_compartilhamento.sql → link público e galeria (para quem já rodou o schema antes)
-supabase/003_acesso.sql → perfis, aprovação e histórico (para quem já rodou o schema antes)
-vercel.json           → pasta pública, cron, cabeçalhos de segurança
-```
-
-**Por que uma função só?** O plano gratuito (Hobby) da Vercel aceita no máximo **12 funções por deploy**, e cada arquivo em `/api` conta como uma. Por isso, todas as rotas ficam em `api/_rotas/`, e o `api/index.js` encaminha cada chamada; o `vercel.json` reescreve `/api/*` para ele. Para criar uma rota nova: escreva o arquivo em `api/_rotas/` e adicione uma linha na lista `ROTAS` do `api/index.js`. **Não crie arquivos soltos em `/api`.**
-
-**Segurança:** o navegador nunca acessa as tabelas direto. As tabelas têm RLS ligado e nenhuma política pública. Toda operação passa pela API, que confere o token de login e só então usa a `service_role` (que fica apenas na Vercel).
+</div>
 
 ---
 
-## Passo a passo
+## O problema
 
-### 1. Ver o visual agora (sem configurar nada)
-Abra a pasta no VS Code e rode o Live Server na pasta `public`, ou execute `npm run demo`. Qualquer e-mail e senha entram no modo demonstração. Na faixa verde do topo, **"Ver como"** troca entre Administrador, Treinador e Cadastro pendente, para testar as permissões.
+Na escolinha **Meninos da Vila FC**, o controle de quem estava matriculado e de quem tinha pago a mensalidade (R$ 40,00) ficava espalhado entre caderno e conversas de WhatsApp. Saber quem estava pendente no mês exigia conferir tudo à mão, e os responsáveis não tinham onde acompanhar.
 
-### 2. Supabase
-1. Crie um projeto em supabase.com.
-2. Em **SQL Editor**, rode o arquivo `supabase/schema.sql`. Ele já cria o bucket `galeria` no Storage.
-   *Já tinha rodado uma versão anterior?* Rode só os arquivos novos, em ordem: `002_compartilhamento.sql` (se ainda não rodou) e depois `003_acesso.sql`. Quem já tinha login vira **administrador** automaticamente.
-   ⚠️ Rode sempre pelo **SQL Editor do painel do Supabase**. Algumas extensões e ferramentas não entendem `create function` e dão erro de "sql parser".
-3. Em **Authentication → Users → Add user**, crie o seu usuário (e-mail e senha) e marque *Auto Confirm User*. Numa instalação nova, **o primeiro usuário vira administrador automaticamente**.
-4. Em **Authentication → Sign In / Providers**, deixe **Allow new users to sign up** LIGADO e **Confirm email** ligado. Ninguém acessa nada sem a sua aprovação, porque as contas novas nascem como pendentes.
-5. Em **Authentication → URL Configuration**, coloque o endereço do site em **Site URL** (ex.: `https://meninosdavila.com.br`) e adicione o mesmo endereço em **Redirect URLs**. É para onde o link de confirmação de e-mail leva.
-6. *(Recomendado)* Em **Authentication → Emails → SMTP Settings**, use o Resend como SMTP (host `smtp.resend.com`, porta `465`, usuário `resend`, senha = sua API key do Resend). O e-mail padrão do Supabase tem limite de poucos envios por hora.
-7. Em **Project Settings → API**, copie a `URL`, a chave `anon` e a `service_role`.
+## A solução
 
-### 3. GitHub
-```bash
-git init -b main
-git add .
-git commit -m "Sistema Meninos da Vila"
-git remote add origin https://github.com/SEU_USUARIO/meninos-da-vila.git
-git push -u origin main
-```
-Confira que o `.env` **não** subiu: ele está no `.gitignore`.
+Um painel web, pensado para uso no celular, onde o treinador:
 
-### 4. Vercel
-1. Clique em **Add New → Project** e importe o repositório. Framework Preset: **Other**.
-2. Em **Environment Variables**, cadastre todas as variáveis do `.env.example`.
-3. Faça o deploy. O `vercel.json` já aponta a pasta `public` e cria o cron do dia 10.
+- cadastra os alunos (com a categoria calculada pela idade, de **Sub-7** a **Sub-17**);
+- marca a mensalidade como paga em **um clique** e vê, mês a mês, quem está em dia e quem está pendente;
+- cobra pelo **WhatsApp** com a mensagem pronta;
+- compartilha com os pais um **link público** com a situação das mensalidades e a **galeria de fotos e vídeos** dos treinos;
+- aprova novos treinadores e acompanha o **histórico** de quem fez o quê.
 
-Para rodar localmente com a API: `npm i -g vercel`, depois `npm install`, depois `vercel dev`. Use um arquivo `.env` com as variáveis.
+<p align="center">
+  <img src="docs/img/painel.png" alt="Painel de mensalidades" width="900">
+</p>
 
-### 5. Resend
-1. Em resend.com, vá em **Domains → Add Domain** e adicione o seu domínio (ex.: `meninosdavila.com.br`).
-2. Copie os registros DNS (SPF, DKIM) para o Cloudflare, como **DNS only**, e aguarde a verificação.
-3. Crie uma API key e configure `RESEND_API_KEY` e `EMAIL_FROM` na Vercel. A `PIX_CHAVE` é opcional e aparece no e-mail.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/publico.png" alt="Página pública dos responsáveis"><p align="center"><sub>Página dos responsáveis (nomes abreviados por padrão)</sub></p></td>
+    <td width="50%"><img src="docs/img/historico.png" alt="Histórico de ações"><p align="center"><sub>Histórico: quem fez o quê e quando</sub></p></td>
+  </tr>
+</table>
 
-### 6. Cloudflare (domínio e DNS)
-1. Na Vercel, vá em **Settings → Domains** e adicione o seu domínio e o `www`.
-2. No Cloudflare, em **DNS**, crie o que a Vercel pedir. Normalmente:
-   - `A` · `@` → `76.76.21.21`
-   - `CNAME` · `www` → `cname.vercel-dns.com`
-3. Deixe esses registros como **DNS only (nuvem cinza)**, como a Vercel recomenda. Ela emite o SSL e já tem proteção própria. Se preferir o proxy laranja do Cloudflare, use **SSL/TLS → Full (strict)**.
+<p align="center">
+  <img src="docs/img/celular.png" alt="Versão para celular" width="260">
+</p>
 
-### 7. Sentry
-1. Crie um projeto **Node.js** e um projeto **Browser JavaScript**, ou use só um.
-2. Configure `SENTRY_DSN` (API) e `SENTRY_DSN_FRONTEND` (navegador) na Vercel.
-
-### 8. Cron de lembretes
-Gere um segredo com `openssl rand -hex 32` e configure em `CRON_SECRET`. A Vercel chama `/api/lembretes` todo dia 10, às 9h de Brasília, enviando esse segredo.
+> Todas as imagens são do **modo demonstração**, com dados fictícios. Nenhum dado real de alunos é publicado neste repositório.
 
 ---
 
-## API
+## Qualidade: o foco do projeto
 
-Todas as rotas exigem `Authorization: Bearer <token do Supabase>` e uma conta **ativa**, exceto `/api/config`, `/api/publico` e `/api/conta`. *(admin)* = só administrador.
+Sou **QA Engineer** e apliquei a mentalidade de qualidade do primeiro requisito até a produção.
 
-| Método | Rota | Descrição |
+### Testes E2E automatizados (Cypress): 22 casos
+
+| Área | Casos | O que garante |
+|---|:---:|---|
+| Login e criação de conta | 7 | Validações, entrada, saída e regras de senha |
+| Cadastro de aluno | 5 | Categoria automática, máscara do WhatsApp, validações e edição |
+| Pagamento | 5 | Indicadores (+R$ 40,00), desfazer, pagamento válido só no mês marcado, histórico |
+| Permissões por perfil | 5 | Treinador sem acesso à Equipe, redirecionamento por URL, tela de espera |
+
+**Estratégia:**
+- **Modo demonstração:** os testes rodam no site sem backend, com dados fictícios, então são **repetíveis e nunca tocam dados reais**.
+- **Trava de segurança:** se alguém apontar a suíte para o site em produção, os testes param antes de criar qualquer dado.
+- **Regras de negócio:** além da interface, os testes conferem os **indicadores financeiros**.
+
+📄 O plano de testes completo, com a tabela de casos e as instruções, está em [`cypress/README.md`](cypress/README.md).
+
+### Bugs encontrados pelos testes
+
+| ID | Bug | Impacto | Status |
+|---|---|---|---|
+| BUG-01 | A máscara do WhatsApp embaralhava os dígitos ao digitar (`81999990000` → `(81) 9999-90`) | Cobrança enviada para o número errado | ✅ Corrigido |
+| BUG-02 | Um clique em "Criar conta" logo após abrir a página se perdia (condição de corrida) | Usuário precisava clicar de novo | ✅ Corrigido |
+
+### Problemas de produção investigados
+
+| Sintoma | Causa raiz | Solução |
 |---|---|---|
-| GET | `/api/config` | Configuração pública |
-| GET | `/api/alunos?competencia=AAAA-MM` | Alunos + situação no mês |
-| POST | `/api/alunos` | Cadastra aluno |
-| PUT | `/api/alunos/:id` | Atualiza aluno |
-| DELETE | `/api/alunos/:id` | Exclui aluno e histórico |
-| POST | `/api/pagamentos` | `{ aluno_id, competencia }` marca pago |
-| DELETE | `/api/pagamentos?aluno_id=&competencia=` | Desfaz pagamento |
-| POST | `/api/lembretes` | `{ competencia }` envia e-mails aos pendentes |
-| GET | `/api/midias` | Galeria |
-| POST | `/api/midias/upload` | `{ mime, tamanho }` gera URL assinada de envio |
-| POST | `/api/midias` | Registra foto/vídeo enviado ou `{ tipo: 'youtube', url }` |
-| PUT / DELETE | `/api/midias/:id` | Edita legenda / exclui (apaga também o arquivo) |
-| GET / POST | `/api/links` | Lista / gera link público `{ titulo, nome_completo, validade_dias }` |
-| PUT / DELETE | `/api/links/:id` | Ativa, desativa, troca nome completo / exclui |
-| GET | `/api/publico/:token?competencia=` | **Sem login.** Dados da página dos responsáveis |
-| GET | `/api/conta` | Quem está logado (funciona mesmo com cadastro pendente) |
-| GET | `/api/usuarios` | Equipe *(admin)* |
-| PUT | `/api/usuarios/:id` | `{ papel?, status? }` aprova, bloqueia, reativa, muda papel *(admin)* |
-| DELETE | `/api/usuarios/:id` | Recusa cadastro ou remove conta *(admin)* |
-| GET | `/api/auditoria?usuario=&grupo=&antes=` | Histórico paginado *(admin)* |
+| Build concluído, mas o deploy falhava | O plano gratuito da Vercel permite no máximo **12 funções**, e a API tinha 15 | A API foi reorganizada em **uma única função** com roteador interno |
+| Login recusado com "Invalid path specified" | A URL do Supabase foi configurada com `/rest/v1/` no final | O servidor passou a normalizar a URL |
+| Usuário "saía da conta" logo após entrar, sem mensagem | Chave `service_role` de outro projeto | Erro de configuração passou a ser exibido, em vez de deslogar em silêncio |
+| Deploys bloqueados no GitHub | E-mail do autor dos commits não vinculado à conta | Identidade do Git corrigida e histórico reescrito |
 
-Respostas de acesso negado trazem um `codigo`: `SEM_LOGIN` (401), `PENDENTE`, `BLOQUEADO` ou `SEM_PERMISSAO` (403).
+### Segurança e privacidade (LGPD)
 
-**Limites da galeria:** fotos até 15 MB e vídeos até 50 MB (limite por arquivo do plano gratuito do Supabase). Para vídeos maiores, use um link do YouTube; pode ser "não listado".
+- **Permissões no servidor:** cada rota da API confere o perfil (administrador, treinador, pendente ou bloqueado). A regra não fica só escondida na tela.
+- **Banco protegido:** RLS ligado e **sem políticas públicas**. O navegador nunca acessa as tabelas diretamente.
+- **Dados de menores no link público:** nomes abreviados ("Arthur S."), sem telefone, e-mail ou data de nascimento; o link pode ser desativado e ter validade; a página não aparece no Google (`noindex`).
+- **Equipe segura:** ninguém altera o próprio acesso, e a escolinha nunca fica sem administrador.
+
+---
+
+## Arquitetura
+
+```mermaid
+flowchart LR
+  U[Treinador / Responsável] -->|HTTPS| V[Vercel]
+  V --> S[Site estático<br/>HTML · CSS · JS]
+  V --> F[API Node.js<br/>1 função · roteador]
+  S -->|login| A[Supabase Auth]
+  F -->|service_role + checagem de perfil| D[(Supabase<br/>PostgreSQL + Storage)]
+  F --> R[Resend<br/>e-mails]
+  S -.erros.-> E[Sentry]
+  F -.erros.-> E
+```
+
+**Decisões técnicas:**
+- **API em uma única função:** respeita o limite do plano gratuito sem perder a organização em rotas (`api/_rotas/`).
+- **Uploads direto para o Storage, com URL assinada:** fotos e vídeos não passam pelo limite de 4,5 MB das funções.
+- **Modo demonstração embutido:** sem backend configurado, o site funciona com dados fictícios. Isso serve para demonstração e para os testes.
+
+## Tecnologias
+
+**Front:** HTML, CSS e JavaScript (sem framework) · **API:** Node.js (Vercel Functions) · **Banco e login:** Supabase · **E-mail:** Resend · **Monitoramento:** Sentry · **Testes:** Cypress · **Versionamento:** GitHub
+
+---
+
+## Como rodar
+
+```bash
+git clone https://github.com/RailtonSilva/meninos-da-vila.git
+cd meninos-da-vila
+npm install
+
+# Site em modo demonstração (dados fictícios, sem configurar nada)
+npm run demo                 # http://localhost:5500
+
+# Testes E2E (em outro terminal)
+npx cypress run              # ou: npm run cy:open
+```
+
+Para rodar com o banco de verdade (Supabase, Vercel, Resend, Sentry e Cloudflare), siga o **[guia de configuração](docs/CONFIGURACAO.md)**.
+
+---
+
+## Sobre o desenvolvimento
+
+O projeto foi desenvolvido **com apoio de IA**. O meu papel foi definir os requisitos com base na necessidade real da escolinha, testar cada funcionalidade, escrever a suíte de testes, investigar e reportar os bugs, e decidir as correções e a configuração da infraestrutura.
+
+## Autor
+
+**Railton da Silva Maranhão** · QA Engineer
+[LinkedIn](https://www.linkedin.com/in/SEU-PERFIL) · [GitHub](https://github.com/RailtonSilva)

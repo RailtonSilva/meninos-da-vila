@@ -3,5 +3,6 @@ node_modules/
 .env*.local
 .vercel/
 .DS_Store
-.vercel
-.env*
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/

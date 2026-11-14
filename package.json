@@ -4,17 +4,19 @@
   "private": true,
   "description": "Cadastro de alunos e controle de mensalidades — Meninos da Vila Futebol Clube",
   "type": "module",
- "engines": {
-  "node": "24.x"
-},
- "scripts": {
-  "build": "echo \"Sem etapa de build: o site estático fica em public/ e a API em api/\"",
-  "demo": "npx --yes serve public -l 5500"
-},
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "echo \"Sem etapa de build: o site estático fica em public/ e a API em api/\"",
+    "demo": "npx --yes serve public -l 5500"
+  },
   "dependencies": {
     "@sentry/node": "^8.55.0",
-    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "resend": "^4.1.2"
+  },
+  "devDependencies": {
+    "cypress": "^16.3.0"
   }
 }

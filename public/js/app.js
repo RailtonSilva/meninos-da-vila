@@ -228,7 +228,17 @@ function atualizarCategoria() {
   $('#catPreview').value = c ? `${c} · ${idade(dn)} anos` : '';
 }
 form.data_nascimento.addEventListener('input', atualizarCategoria);
-form.telefone.addEventListener('input', (e) => (e.target.value = mascaraTelefone(e.target.value)));
+// Aplica a máscara mantendo o cursor logo depois do mesmo dígito
+// (sem isso, o próximo dígito digitado caía no meio e embaralhava o número)
+form.telefone.addEventListener('input', (e) => {
+  const el = e.target;
+  const pos = el.selectionStart ?? el.value.length;
+  const digitosAntesDoCursor = el.value.slice(0, pos).replace(/\D/g, '').length;
+  el.value = mascaraTelefone(el.value);
+  let i = 0;
+  for (let n = 0; i < el.value.length && n < digitosAntesDoCursor; i++) if (/\d/.test(el.value[i])) n++;
+  el.setSelectionRange(i, i);
+});
 dlg.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => dlg.close()));
 
 form.addEventListener('submit', async (e) => {
@@ -378,7 +388,7 @@ if (!session) {
     $('#valorMens').textContent = brl(state.cfg.mensalidade);
     mostrarView();
     if (conta.papel === 'admin') {
-            // Teste do Sentry: no console do navegador (F12), digite  testarSentry()
+      // Teste do Sentry: no console do navegador (F12), digite  testarSentry()
       window.testarSentry = async () => {
         if (!api.sentryAtivo()) return '⚠️ Sentry do navegador NÃO está ativo (confira SENTRY_DSN_FRONTEND na Vercel e faça Redeploy).';
         api.reportError(new Error(`Teste do Sentry (navegador) — ${new Date().toISOString()}`));

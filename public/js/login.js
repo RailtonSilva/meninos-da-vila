@@ -4,15 +4,10 @@ const $ = (s) => document.querySelector(s);
 const formLogin = $('#formLogin');
 const formCadastro = $('#formCadastro');
 
-const cfg = await api.init();
-
-if (cfg.demo) {
-  $('#demoNote').hidden = false;
-  formLogin.email.value = 'treinador@meninosdavila.com';
-  formLogin.senha.value = 'demo1234';
-} else if (await api.getSession()) {
-  location.replace('app.html');
-}
+// A configuração começa a carregar já, mas os botões NÃO esperam por ela:
+// eles são ligados logo abaixo, então o primeiro clique sempre funciona,
+// mesmo com internet lenta (antes, um clique rápido em "Criar conta" se perdia).
+const pronto = api.init();
 
 /* ---------- Alternar Entrar / Criar conta ---------- */
 function modo(m) {
@@ -35,6 +30,15 @@ function carregando(btn, ativo, texto) {
   btn.innerHTML = ativo ? `<span class="spinner"></span> ${texto}` : texto;
 }
 
+// Se o painel mandou de volta para cá, mostra o motivo
+try {
+  const aviso = sessionStorage.getItem('mdv-aviso-login');
+  if (aviso) {
+    sessionStorage.removeItem('mdv-aviso-login');
+    erro($('#erro'), aviso);
+  }
+} catch {}
+
 /* ---------- Entrar ---------- */
 formLogin.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -45,6 +49,7 @@ formLogin.addEventListener('submit', async (e) => {
   const btn = $('#btnEntrar');
   carregando(btn, true, 'Entrando…');
   try {
+    await pronto;
     await api.signIn(email, senha);
     location.replace('app.html'); // o painel decide: liberado, aguardando aprovação ou bloqueado
   } catch (err) {
@@ -69,6 +74,7 @@ formCadastro.addEventListener('submit', async (e) => {
   const btn = $('#btnCadastrar');
   carregando(btn, true, 'Criando conta…');
   try {
+    const cfg = await pronto;
     const { precisaConfirmar } = await api.signUp(nome, email, senha);
     formCadastro.reset();
     formCadastro.hidden = true;
@@ -85,3 +91,14 @@ formCadastro.addEventListener('submit', async (e) => {
     carregando(btn, false, 'Criar conta');
   }
 });
+
+/* ---------- Depois que a configuração carregar ---------- */
+const cfg = await pronto;
+if (cfg.demo) {
+  $('#demoNote').hidden = false;
+  // Só preenche se a pessoa ainda não digitou nada
+  if (!formLogin.email.value) formLogin.email.value = 'treinador@meninosdavila.com';
+  if (!formLogin.senha.value) formLogin.senha.value = 'demo1234';
+} else if (await api.getSession()) {
+  location.replace('app.html');
+}

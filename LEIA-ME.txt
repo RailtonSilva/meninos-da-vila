@@ -1,0 +1,21 @@
+PACOTE FINAL — tudo o que falta no GitHub
+
+Copie TODO o conteúdo desta pasta para a pasta do REPOSITÓRIO
+(meninos-da-vila-backend, a que tem a pasta .git) e aceite SUBSTITUIR.
+
+NÃO vem package.json nem package-lock.json: mantenha os seus
+(eles já têm o Cypress instalado).
+
+Correções de bugs:
+  public/js/app.js     → BUG-01: máscara do WhatsApp
+  public/js/login.js   → BUG-02: clique perdido em "Criar conta"
+  public/app.html      → autocomplete nos campos do responsável
+Melhorias:
+  api/_lib/supabase.js, api/_rotas/config.js → aceita SUPABASE_URL com /rest/v1 e avisa chave errada
+  public/js/api.js     → mostra o motivo ao sair da conta + mensagens do cadastro
+  public/serve.json    → servidor de demonstração sem "URLs limpas" (testes)
+Testes e documentação:
+  cypress/, cypress.config.js → 22 casos E2E + plano de testes
+  README.md            → vitrine do projeto
+  docs/                → manual de configuração + prints
+  .gitignore           → ignora prints/vídeos gerados pelo Cypress

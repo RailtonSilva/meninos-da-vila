@@ -3,11 +3,21 @@ import { HttpError } from './errors.js';
 
 let client;
 
+/**
+ * Endereço base do projeto Supabase. Aceita o valor com sobras comuns de copiar e colar
+ * ("/rest/v1/", barra no final, espaços) e devolve só https://xxxx.supabase.co
+ */
+export function urlSupabase() {
+  const bruto = String(process.env.SUPABASE_URL || '').trim();
+  if (!bruto) return '';
+  try { return new URL(bruto).origin; } catch { return bruto.replace(/\/(rest|auth)\/v1.*$/, '').replace(/\/+$/, ''); }
+}
+
 /** Cliente com service_role: só roda no servidor e ignora o RLS. Nunca exponha essa chave no front. */
 export function db() {
   if (!client) {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = urlSupabase();
+    const key = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
     if (!url || !key) throw new Error('SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY precisam estar configuradas.');
     client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   }
@@ -20,6 +30,11 @@ export async function requireUser(req) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) throw new HttpError(401, 'Faça login para continuar.', 'SEM_LOGIN');
   const { data, error } = await db().auth.getUser(token);
+  // Chave do servidor errada (de outro projeto, anon no lugar da service_role, incompleta...):
+  // não é culpa do usuário, então não o desloga; mostra o problema de configuração.
+  if (error && /api ?key|apikey|invalid path|no api key/i.test(error.message)) {
+    throw new HttpError(500, 'Configuração do servidor: a SUPABASE_SERVICE_ROLE_KEY na Vercel está errada ou é de outro projeto.', 'CONFIG');
+  }
   if (error || !data?.user) throw new HttpError(401, 'Sessão expirada. Entre novamente.', 'SEM_LOGIN');
   return data.user;
 }

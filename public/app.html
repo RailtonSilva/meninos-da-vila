@@ -15,7 +15,7 @@
   <div class="demo-banner" id="demoBanner" hidden>
     Modo demonstração: dados fictícios salvos só neste navegador.
     <label class="demo-perfil">Ver como
-      <select id="demoPerfil">
+      <select autocomplete="off" id="demoPerfil">
         <option value="admin">Administrador</option>
         <option value="treinador">Treinador</option>
         <option value="pendente">Cadastro pendente</option>
@@ -130,7 +130,7 @@
           <button data-f="pendentes">Pendentes <em data-c="pendentes">0</em></button>
           <button data-f="inativos">Inativos <em data-c="inativos">0</em></button>
         </div>
-        <select id="filtroCategoria" aria-label="Categoria"><option value="">Todas as categorias</option></select>
+        <select autocomplete="off" id="filtroCategoria" aria-label="Categoria"><option value="">Todas as categorias</option></select>
       </div>
 
       <div class="list-head"><span>Aluno</span><span>Responsável</span><span>Mensalidade</span><span style="text-align:right">Ações</span></div>
@@ -170,7 +170,7 @@
         </div>
       </div>
       <label class="legenda-envio">Legenda para os próximos envios (opcional)
-        <input id="legendaEnvio" maxlength="200" placeholder="Ex.: Treino de sábado · Sub-11">
+        <input autocomplete="off" id="legendaEnvio" maxlength="200" placeholder="Ex.: Treino de sábado · Sub-11">
       </label>
       <div class="uploads" id="uploads"></div>
     </div>
@@ -268,8 +268,8 @@
     <div data-sub-view="historico" hidden>
       <div class="card">
         <div class="toolbar">
-          <select id="filtroUsuario" class="select-inline" aria-label="Filtrar por pessoa"><option value="">Todas as pessoas</option></select>
-          <select id="filtroGrupo" class="select-inline" aria-label="Filtrar por tipo">
+          <select autocomplete="off" id="filtroUsuario" class="select-inline" aria-label="Filtrar por pessoa"><option value="">Todas as pessoas</option></select>
+          <select autocomplete="off" id="filtroGrupo" class="select-inline" aria-label="Filtrar por tipo">
             <option value="">Todas as ações</option>
             <option value="pagamento">Pagamentos</option>
             <option value="aluno">Alunos</option>
@@ -298,12 +298,12 @@
       </header>
       <div class="form-grid">
         <label class="full">Nome do aluno *<input name="nome" required maxlength="120" autocomplete="off"></label>
-        <label>Data de nascimento<input type="date" name="data_nascimento"></label>
+        <label>Data de nascimento<input autocomplete="off" type="date" name="data_nascimento"></label>
         <label>Categoria<input id="catPreview" disabled placeholder="Calculada pela idade"></label>
         <label class="full">Responsável<input name="responsavel" maxlength="120" autocomplete="off"></label>
-        <label>WhatsApp<input name="telefone" inputmode="tel" placeholder="(81) 99999-9999" maxlength="16"></label>
-        <label>E-mail do responsável<input type="email" name="email" placeholder="para lembretes" maxlength="160"></label>
-        <label class="full">Observações<textarea name="observacoes" rows="2" maxlength="1000" placeholder="Posição, restrições, horários…"></textarea></label>
+        <label>WhatsApp<input autocomplete="off" name="telefone" inputmode="tel" placeholder="(81) 99999-9999" maxlength="16"></label>
+        <label>E-mail do responsável<input autocomplete="off" type="email" name="email" placeholder="para lembretes" maxlength="160"></label>
+        <label class="full">Observações<textarea autocomplete="off" name="observacoes" rows="2" maxlength="1000" placeholder="Posição, restrições, horários…"></textarea></label>
         <label class="switch full"><input type="checkbox" name="ativo" checked><span></span>Aluno ativo (inativos não contam nas mensalidades)</label>
       </div>
       <p class="form-error" id="formErro" hidden></p>
@@ -329,8 +329,8 @@
     <form id="formYoutube" novalidate>
       <header><h2>Vídeo do YouTube</h2><button type="button" class="icon-btn" data-close aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
       <div class="form-grid one">
-        <label>Link do vídeo *<input name="url" required placeholder="https://youtu.be/…"></label>
-        <label>Legenda<input name="legenda" maxlength="200" placeholder="Ex.: Final do torneio da Vila"></label>
+        <label>Link do vídeo *<input autocomplete="off" name="url" required placeholder="https://youtu.be/…"></label>
+        <label>Legenda<input autocomplete="off" name="legenda" maxlength="200" placeholder="Ex.: Final do torneio da Vila"></label>
         <p class="hint">Ideal para vídeos longos ou acima de 50 MB. Pode ser um vídeo "não listado".</p>
       </div>
       <p class="form-error" id="ytErro" hidden></p>
@@ -342,7 +342,7 @@
   <dialog class="modal modal-sm" id="dlgLegenda">
     <form id="formLegenda" novalidate>
       <header><h2>Editar legenda</h2><button type="button" class="icon-btn" data-close aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
-      <div class="form-grid one"><label>Legenda<input name="legenda" maxlength="200"></label></div>
+      <div class="form-grid one"><label>Legenda<input autocomplete="off" name="legenda" maxlength="200"></label></div>
       <footer><button type="button" class="btn btn-ghost" data-close>Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></footer>
     </form>
   </dialog>
@@ -352,9 +352,9 @@
     <form id="formLink" novalidate>
       <header><h2>Gerar link público</h2><button type="button" class="icon-btn" data-close aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
       <div class="form-grid one">
-        <label>Título da página<input name="titulo" maxlength="100"></label>
+        <label>Título da página<input autocomplete="off" name="titulo" maxlength="100"></label>
         <label>Validade
-          <select name="validade" class="select">
+          <select autocomplete="off" name="validade" class="select">
             <option value="0">Sem validade (até você desativar)</option>
             <option value="30">30 dias</option>
             <option value="90">90 dias</option>

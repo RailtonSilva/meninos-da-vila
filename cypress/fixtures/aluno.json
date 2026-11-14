@@ -1,0 +1,8 @@
+{
+  "nome": "João Teste Cypress",
+  "responsavel": "Maria Teste",
+  "telefone": "81999990000",
+  "telefoneFormatado": "(81) 99999-0000",
+  "email": "maria.teste@email.com",
+  "observacoes": "Criado pelo teste automatizado"
+}

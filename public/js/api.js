@@ -54,6 +54,7 @@ export async function testeSentryServidor() {
     return err.message;
   }
 }
+
 /* ---------------- Autenticação ---------------- */
 
 export async function getSession() {
@@ -77,6 +78,10 @@ export async function signUp(nome, email, password) {
     options: { data: { nome }, emailRedirectTo: `${location.origin}/` },
   });
   if (error) {
+    if (/not.?authorized/i.test(error.message) || error.code === 'email_address_not_authorized')
+      throw new Error('O servidor de e-mail da escolinha ainda não está configurado para este endereço. Avise o administrador.');
+    if (/rate limit/i.test(error.message) || error.status === 429)
+      throw new Error('Muitos cadastros em pouco tempo. Tente de novo em alguns minutos.');
     if (/registered|already/i.test(error.message)) throw new Error('Este e-mail já tem cadastro. Use "Entrar".');
     if (/password/i.test(error.message)) throw new Error('Senha fraca: use pelo menos 8 caracteres.');
     throw new Error(error.message);
@@ -107,9 +112,11 @@ async function request(path, { method = 'GET', body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (r.status === 401) {
+    const motivo = (await r.json().catch(() => ({}))).erro || 'Sua sessão expirou. Entre novamente.';
+    try { sessionStorage.setItem('mdv-aviso-login', motivo); } catch {}
     await signOut();
     location.replace('index.html');
-    throw new Error('Sessão expirada');
+    throw new Error(motivo);
   }
   if (r.status === 204) return null;
   const data = await r.json().catch(() => ({}));

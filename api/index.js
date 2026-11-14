@@ -3,7 +3,7 @@
 // O plano gratuito (Hobby) da Vercel aceita no máximo 12 funções por deploy, e cada
 // arquivo em /api conta como uma. Por isso todas as rotas ficam em api/_rotas/ (pastas
 // que começam com "_" não viram funções) e este arquivo encaminha cada chamada.
-// O vercel.json reescreve /api/qualquer-coisa → /api?__rota=qualquer-coisa.
+// O vercel.json reescreve /api/qualquer-coisa → /api?__rota=qualquer-coisa ("/api/(.*)" → "/api?__rota=$1").
 //
 // Para criar uma rota nova: escreva o arquivo em api/_rotas/ e adicione uma linha em ROTAS.
 
